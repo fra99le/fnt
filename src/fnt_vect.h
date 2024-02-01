@@ -92,7 +92,7 @@ static int fnt_vect_print(fnt_vect_t *vec, char *label, char *fmt) {
     for(int i=0; i<vec->n; ++i) {
         if( fmt != NULL )       { printf(fmt, vec->v[i]); }
         else                    { printf("%g", vec->v[i]); }
-        
+
         if( i < vec->n - 1 )    { printf(", "); }
     }
     printf("]");
@@ -120,7 +120,7 @@ static int fnt_vect_add(fnt_vect_t *sum, fnt_vect_t *a, fnt_vect_t *b) {
     if( b->v == NULL )      { return FNT_VEC_FAILURE; }
     if( sum->n != a->n )    { return FNT_VEC_FAILURE; }
     if( b->n != a->n )      { return FNT_VEC_FAILURE; }
-    
+
     for(int i=0; i<a->n; ++i) {
         sum->v[i] = a->v[i] + b->v[i];
     }
@@ -138,7 +138,7 @@ static int fnt_vect_sub(fnt_vect_t *diff, fnt_vect_t *a, fnt_vect_t *b) {
     if( b->v == NULL )      { return FNT_VEC_FAILURE; }
     if( diff->n != a->n )   { return FNT_VEC_FAILURE; }
     if( b->n != a->n )      { return FNT_VEC_FAILURE; }
-    
+
     for(int i=0; i<a->n; ++i) {
         diff->v[i] = a->v[i] - b->v[i];
     }
@@ -153,7 +153,7 @@ static int fnt_vect_scale(fnt_vect_t *result, double scaling, fnt_vect_t *vec) {
     if( vec->v == NULL )        { return FNT_VEC_FAILURE; }
     if( result->v == NULL )     { return FNT_VEC_FAILURE; }
     if( result->n != vec->n )   { return FNT_VEC_FAILURE; }
-    
+
     for(int i=0; i<vec->n; ++i) {
         result->v[i] = scaling * vec->v[i];
     }
