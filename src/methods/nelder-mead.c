@@ -10,29 +10,38 @@
 #include "../fnt_util.h"
 #include "../fnt_vect.h"
 
-/* ---------------------------- */
+
+/* MARK: Sample types */
 
 typedef struct nm_sample {
     fnt_vect_t parameters;
     double value;
-} nm_sample;
+} nm_sample_t;
 
-void nmSampleCopy(nm_sample *dst, nm_sample *src) {
+
+void nm_sample_copy(nm_sample_t *dst, nm_sample_t *src) {
     fnt_vect_copy(&dst->parameters, &src->parameters);
     dst->value = src->value;
 }
 
-typedef struct NMSimplex {
-    nm_sample *points;
-    int count;
-} NMSimplex;
 
-void nmSimplexInit(NMSimplex *simplex, int dimensions) {
+/* MARK: Simplex types */
+
+typedef struct nm_simplex {
+    nm_sample_t *points;
+    int count;
+} nm_simplex_t;
+
+
+/* MARK: Simplex functions */
+
+void nm_simplex_init(nm_simplex_t *simplex, int dimensions) {
     memset(simplex, '\0', sizeof(*simplex));
-    simplex->points = calloc(dimensions+1, sizeof(nm_sample));
+    simplex->points = calloc(dimensions+1, sizeof(nm_sample_t));
 }
 
-void nmSimplexFree(NMSimplex *simplex) {
+
+void nm_simplex_free(nm_simplex_t *simplex) {
     for(int i=0; i<simplex->count; ++i) {
         fnt_vect_free(&simplex->points[i].parameters);
     }
@@ -40,7 +49,8 @@ void nmSimplexFree(NMSimplex *simplex) {
     simplex->count = 0;
 }
 
-void nmSimplexPrint(NMSimplex *simplex) {
+
+void nm_simplex_print(nm_simplex_t *simplex) {
     printf("simplex:\n");
     for(int i=0; i<simplex->count; ++i) {
         printf("\tvalue=%g; ", simplex->points[i].value);
@@ -48,28 +58,30 @@ void nmSimplexPrint(NMSimplex *simplex) {
     }
 }
 
-void nmSimplexAdd(NMSimplex *simplex, nm_sample *sample) {
+
+void nm_simplex_add(nm_simplex_t *simplex, nm_sample_t *sample) {
     fnt_vect_calloc(&simplex->points[simplex->count].parameters, sample->parameters.n);
-    nmSampleCopy(&simplex->points[simplex->count], sample);
+    nm_sample_copy(&simplex->points[simplex->count], sample);
     simplex->count += 1;
 }
 
-void nmSimplexSort(NMSimplex *simplex) {
+
+void nm_simplex_sort(nm_simplex_t *simplex) {
     if( simplex->count <= 1 )
         return;
 
     int done = 0;
-    nm_sample *points = simplex->points;
-    nm_sample tmp;
+    nm_sample_t *points = simplex->points;
+    nm_sample_t tmp;
     fnt_vect_calloc(&tmp.parameters, points[0].parameters.n);
     while( !done ) {
         done = 1;
         for(int i=simplex->count-1; i>0; --i) {
             if( points[i-1].value > points[i].value ) {
                 /* swap points i and i-1 */
-                nmSampleCopy(&tmp, &points[i-1]);
-                nmSampleCopy(&points[i-1], &points[i]);
-                nmSampleCopy(&points[i], &tmp);
+                nm_sample_copy(&tmp, &points[i-1]);
+                nm_sample_copy(&points[i-1], &points[i]);
+                nm_sample_copy(&points[i], &tmp);
 
                 done = 0;
             }
@@ -77,29 +89,31 @@ void nmSimplexSort(NMSimplex *simplex) {
     }
     fnt_vect_free(&tmp.parameters);
     #if 0
-    nmSimplexPrint(simplex);
+    nm_simplex_print(simplex);
     #endif /* 0 */
 }
 
-/* ---------------------------- */
 
-enum NMState {
+/* MARK: Nelder-Mead types */
+
+typedef enum nm_state {
     initial, reflect, expand, contract_out, contract_in, shrink, shrink2
-};
+} nm_state_t;
+
 
 /* see: http://www.scholarpedia.org/article/Nelder-Mead_algorithm */
-typedef struct NelderMead {
+typedef struct nelder_mead {
     /* maintain search state */
     int dimensions;
     int iterations;
-    NMSimplex simplex;
+    nm_simplex_t simplex;
     fnt_vect_t seed;
-    enum NMState state;
+    nm_state_t state;
 
     /* sample points */
-    nm_sample x_r;
-    nm_sample x_e;
-    nm_sample x_c;
+    nm_sample_t x_r;
+    nm_sample_t x_e;
+    nm_sample_t x_c;
     fnt_vect_t s_shrink;
 
     /* hyper-parameters */
@@ -107,10 +121,13 @@ typedef struct NelderMead {
     double beta;
     double gamma;
     double delta;
-} NelderMead;
+} nelder_mead_t;
+
+
+/* MARK: Nelder-Mead function */
 
 void nm_init(void **nm_ptr, int dimensions) {
-    NelderMead *nm = calloc(1, sizeof(NelderMead));
+    nelder_mead_t *nm = calloc(1, sizeof(nelder_mead_t));
     *nm_ptr = nm;
     memset(nm, '\0', sizeof(*nm));
 
@@ -129,11 +146,12 @@ void nm_init(void **nm_ptr, int dimensions) {
     fnt_vect_calloc(&nm->x_c.parameters, dimensions);
     fnt_vect_calloc(&nm->s_shrink, dimensions);
 
-    nmSimplexInit(&nm->simplex, dimensions);
+    nm_simplex_init(&nm->simplex, dimensions);
 }
 
+
 void nm_free(void *nm_ptr) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
 
     fnt_vect_free(&nm->seed);
     fnt_vect_free(&nm->x_r.parameters);
@@ -141,19 +159,21 @@ void nm_free(void *nm_ptr) {
     fnt_vect_free(&nm->x_c.parameters);
     fnt_vect_free(&nm->s_shrink);
 
-    nmSimplexFree(&nm->simplex);
+    nm_simplex_free(&nm->simplex);
 
     free(nm); nm=NULL;
 }
 
+
 void nm_set_seed(void *nm_ptr, fnt_vect_t *seed) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
     if( nm->state != initial ) { return; }
     fnt_vect_copy(&nm->seed, seed);
 }
 
+
 void nm_best_point(void *nm_ptr, fnt_vect_t *result) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
 
     int best = 0;
     double min = nm->simplex.points[best].value;
@@ -168,56 +188,57 @@ void nm_best_point(void *nm_ptr, fnt_vect_t *result) {
         fnt_vect_copy(result, &nm->simplex.points[best].parameters);
 }
 
+
 void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
 
     nm->iterations += 1;
 
-    nm_sample newSample;
-    fnt_vect_calloc(&newSample.parameters, parameters->n);
-    fnt_vect_copy(&newSample.parameters, parameters);
-    newSample.value = value;
+    nm_sample_t new_sample;
+    fnt_vect_calloc(&new_sample.parameters, parameters->n);
+    fnt_vect_copy(&new_sample.parameters, parameters);
+    new_sample.value = value;
 
     /* shrink just replaces points, but needs the associated values */
     if( nm->state == shrink2 ) {
-        nmSampleCopy(&nm->simplex.points[nm->simplex.count-2], &newSample);
+        nm_sample_copy(&nm->simplex.points[nm->simplex.count-2], &new_sample);
         nm->state = reflect;
-        fnt_vect_free(&newSample.parameters);
+        fnt_vect_free(&new_sample.parameters);
         return;
     } else if( nm->state == shrink ) {
-        nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &newSample);
+        nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &new_sample);
         nm->state = shrink2;
-        fnt_vect_free(&newSample.parameters);
+        fnt_vect_free(&new_sample.parameters);
         return;
     }
 
     /* check for initialization state */
     if( nm->simplex.count <= nm->dimensions ) {
-        nmSimplexAdd(&nm->simplex, &newSample);
+        nm_simplex_add(&nm->simplex, &new_sample);
         if( nm->simplex.count >= nm->dimensions+1 )
             nm->state = reflect;
-        fnt_vect_free(&newSample.parameters);
+        fnt_vect_free(&new_sample.parameters);
         return;
     }
 
     /* sort simple */
     if( nm->state != shrink && nm->state != shrink2 )
-        nmSimplexSort(&nm->simplex);
+        nm_simplex_sort(&nm->simplex);
 
     /* get h, s, l */
-    nm_sample h; /* simplex[simplex.count-1] */
-    nm_sample s; /* simplex[simplex.count-2] */
-    nm_sample l; /* simplex[0] */
-    nm_sample r; /* newSample */
+    nm_sample_t h; /* simplex[simplex.count-1] */
+    nm_sample_t s; /* simplex[simplex.count-2] */
+    nm_sample_t l; /* simplex[0] */
+    nm_sample_t r; /* new_sample */
     fnt_vect_calloc(&h.parameters, nm->dimensions);
     fnt_vect_calloc(&s.parameters, nm->dimensions);
     fnt_vect_calloc(&l.parameters, nm->dimensions);
     fnt_vect_calloc(&r.parameters, nm->dimensions);
-    nmSampleCopy(&h, &nm->simplex.points[nm->simplex.count-1]);
-    nmSampleCopy(&s, &nm->simplex.points[nm->simplex.count-2]);
-    nmSampleCopy(&l, &nm->simplex.points[0]);
-    nmSampleCopy(&r, &newSample);
-    fnt_vect_free(&newSample.parameters);
+    nm_sample_copy(&h, &nm->simplex.points[nm->simplex.count-1]);
+    nm_sample_copy(&s, &nm->simplex.points[nm->simplex.count-2]);
+    nm_sample_copy(&l, &nm->simplex.points[0]);
+    nm_sample_copy(&r, &new_sample);
+    fnt_vect_free(&new_sample.parameters);
 
     /* actual parameters can be discarded,
      * as only the output values are needed here */
@@ -234,25 +255,25 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
 
     /* deal with recently computed point based on state */
     if( nm->state == reflect ) {
-        nmSampleCopy(&nm->x_r, &r);
+        nm_sample_copy(&nm->x_r, &r);
 
         if( l.value <= nm->x_r.value && nm->x_r.value < s.value ) {
             /* accept x_r and terminate iteration */
-            nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &r);
+            nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &r);
             fnt_vect_free(&r.parameters);
             return;
         }
     }
 
     if( nm->state == expand ) {
-        nmSampleCopy(&nm->x_e, &r);
+        nm_sample_copy(&nm->x_e, &r);
 
         if( nm->x_e.value < nm->x_r.value ) {
             /* accept x_e and terminate iteration */
-            nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &nm->x_e);
+            nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_e);
         } else {
             /* accept x_r and terminate iteration */
-            nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &nm->x_r);
+            nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_r);
         }
 
         nm->state = reflect;
@@ -261,11 +282,11 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
     }
 
     if( nm->state == contract_out ) {
-        nmSampleCopy(&nm->x_c, &r);
+        nm_sample_copy(&nm->x_c, &r);
 
         if( nm->x_c.value < nm->x_r.value ) {
             /* accept x_c and terminate iteration */
-            nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
+            nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
             nm->state = reflect;
             fnt_vect_free(&r.parameters);
             return;
@@ -273,11 +294,11 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
     }
 
     if( nm->state == contract_in ) {
-        nmSampleCopy(&nm->x_c, &r);
+        nm_sample_copy(&nm->x_c, &r);
 
         if( nm->x_c.value < h.value ) {
             /* accept x_c and terminate iteration */
-            nmSampleCopy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
+            nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
             nm->state = reflect;
             fnt_vect_free(&r.parameters);
             return;
@@ -303,8 +324,9 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
     return;
 }
 
+
 void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
 
     if( nm->state == initial && nm->simplex.count < nm->dimensions+1 ) {
         /* add new initial point */
@@ -328,28 +350,28 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
 
     /* sort simplex */
     if( nm->state != shrink && nm->state != shrink2 )
-        nmSimplexSort(&nm->simplex);
+        nm_simplex_sort(&nm->simplex);
 
     /* get h, s, l */
-    nm_sample h; /* simplex[simplex.count-1] */
-    nm_sample s; /* simplex[simplex.count-2] */
-    nm_sample l; /* simplex[0] */
+    nm_sample_t h; /* simplex[simplex.count-1] */
+    nm_sample_t s; /* simplex[simplex.count-2] */
+    nm_sample_t l; /* simplex[0] */
     fnt_vect_calloc(&h.parameters, nm->dimensions);
     fnt_vect_calloc(&s.parameters, nm->dimensions);
     fnt_vect_calloc(&l.parameters, nm->dimensions);
-    nmSampleCopy(&h, &nm->simplex.points[nm->simplex.count-1]);
-    nmSampleCopy(&s, &nm->simplex.points[nm->simplex.count-2]);
-    nmSampleCopy(&l, &nm->simplex.points[0]);
+    nm_sample_copy(&h, &nm->simplex.points[nm->simplex.count-1]);
+    nm_sample_copy(&s, &nm->simplex.points[nm->simplex.count-2]);
+    nm_sample_copy(&l, &nm->simplex.points[0]);
 
     /* compute centroid */
-    fnt_vect_t c, sumVect;
+    fnt_vect_t c, sum_vect;
     fnt_vect_calloc(&c, nm->dimensions);
-    fnt_vect_calloc(&sumVect, nm->dimensions);
+    fnt_vect_calloc(&sum_vect, nm->dimensions);
     for(int i=0; i<nm->simplex.count-1; ++i) {
-        fnt_vect_add(&sumVect, &nm->simplex.points[i].parameters, &sumVect);
+        fnt_vect_add(&sum_vect, &nm->simplex.points[i].parameters, &sum_vect);
     }
-    fnt_vect_scale(&sumVect, 1.0/(nm->simplex.count-1), &c);
-    fnt_vect_free(&sumVect);
+    fnt_vect_scale(&sum_vect, 1.0/(nm->simplex.count-1), &c);
+    fnt_vect_free(&sum_vect);
 
     /* add appropriate new point(s) */
     fnt_vect_t scaled, tmp;
@@ -405,8 +427,9 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
     return;
 }
 
+
 int nm_simplex_point(void *nm_ptr, int which, fnt_vect_t *point, double *value) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
     if( which >= nm->simplex.count )
         return 0;
 
@@ -418,8 +441,9 @@ int nm_simplex_point(void *nm_ptr, int which, fnt_vect_t *point, double *value) 
     return 1;
 }
 
+
 int nm_done(void *nm_ptr, double threshold, int iterations) {
-    NelderMead *nm = nm_ptr;
+    nelder_mead_t *nm = nm_ptr;
     if( nm->state == initial )
         return 0;
 
@@ -431,7 +455,7 @@ int nm_done(void *nm_ptr, double threshold, int iterations) {
     /* check distance between best and worst parameters */
     double dist;
     if( nm->state != shrink && nm->state != shrink2 )
-        nmSimplexSort(&nm->simplex);
+        nm_simplex_sort(&nm->simplex);
     fnt_vect_dist(&nm->simplex.points[0].parameters,
                 &nm->simplex.points[nm->simplex.count-1].parameters, &dist);
     #if 0
