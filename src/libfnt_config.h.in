@@ -1,0 +1,4 @@
+/* the configured options and settings for fnt */
+#define FNT_VERSION_MAJOR @FNT_VERSION_MAJOR@
+#define FNT_VERSION_MINOR @FNT_VERSION_MINOR@
+#define FNT_VERSION_PATCH @FNT_VERSION_PATCH@
