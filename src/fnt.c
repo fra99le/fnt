@@ -300,7 +300,10 @@ int fnt_set_method(void *context, char *name, int dimensions) {
 
     /* dynamically load module */
     for(int i=0; i<ctx->methods_list.count; ++i) {
-        printf("checking %s\n", ctx->methods_list.entries[i].name);
+        if( fnt_verbose_level >= 3 ) {
+            printf("DEBUG: checking %s\n", ctx->methods_list.entries[i].name);
+        }
+
         if( strncmp(ctx->methods_list.entries[i].name, name,
                 sizeof(ctx->methods_list.entries[i].name)) == 0 ) {
             return fnt_method_load(ctx, ctx->methods_list.entries[i].path);
