@@ -74,22 +74,42 @@ typedef struct fnt_context {
 
 /* MARK: Internal functions */
 
+int fnt_method_list_init(fnt_method_list_t *list, int initial_cap) {
+
+    if( (list->entries
+            = calloc(initial_cap, sizeof(fnt_method_list_entry_t)))
+            == NULL ) {
+        if( fnt_verbose_level >= 1 ) {
+            perror("calloc");
+        }
+        return FNT_FAILURE;
+    }
+    list->capacity = initial_cap;
+    list->count = 0;
+
+    return FNT_SUCCESS;
+}
+
+
+int fnt_method_list_free(fnt_method_list_t *list) {
+    if( list == NULL )       { return FNT_FAILURE; }
+
+    if( list->entries != NULL ) {
+        free(list->entries); list->entries = NULL;
+    }
+    list->count = list->capacity = 0;
+
+    return FNT_SUCCESS;
+}
+
+
 int fnt_method_list_add(context_t *ctx, fnt_method_list_entry_t *entry) {
     if( ctx == NULL )   { return FNT_FAILURE; }
     if( entry == NULL ) { return FNT_FAILURE; }
 
     /* allocate list, if needed */
     if( ctx->methods_list.entries == NULL ) {
-        int initial_cap = 10;
-        if( (ctx->methods_list.entries
-                = calloc(initial_cap, sizeof(fnt_method_list_entry_t)))
-                == NULL ) {
-            if( fnt_verbose_level >= 1 ) {
-                perror("calloc");
-            }
-            return FNT_FAILURE;
-        }
-        ctx->methods_list.capacity  = initial_cap;
+        fnt_method_list_init(&ctx->methods_list, 10);
     }
 
     if( ctx->methods_list.count == ctx->methods_list.capacity ) {
@@ -201,14 +221,6 @@ int fnt_register_methods(context_t *ctx, char *path) {
     }
 
     closedir(dirp); dirp = NULL;
-
-    return FNT_SUCCESS;
-}
-
-
-int fnt_method_list_free(fnt_method_list_t *list) {
-    free(list->entries); list->entries = NULL;
-    list->count = list->capacity = 0;
 
     return FNT_SUCCESS;
 }
