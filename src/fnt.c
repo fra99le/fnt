@@ -175,6 +175,7 @@ int fnt_register_method(context_t *ctx, char *filename) {
 
 
 int fnt_register_methods(context_t *ctx, char *path) {
+
     /* check input */
     if( path == NULL ) {
         if( fnt_verbose_level >= 1 ) {
@@ -239,7 +240,6 @@ int fnt_method_load(context_t *ctx, char *filename) {
         return FNT_FAILURE;
     }
 
-    printf("fnt_verbose_level: %i\n", fnt_verbose_level);
     if( fnt_verbose_level >= 2 ) {
         printf("Loading method from '%s'.\n", filename);
     }
