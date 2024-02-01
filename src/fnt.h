@@ -45,6 +45,20 @@ int fnt_free(void **context);
  */
 int fnt_info(void *context);
 
+/** \brief Provide hyper-parameters the method may need.
+ * \param id Name of the hyper-parameter.
+ * \param value_ptr pointer to the value being set.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int fnt_hparam_set(void *context, char *id, void *value_ptr);
+
+/** \brief Retrieve hyper-parameters from the method.
+ * \param id Name of the hyper-parameter.
+ * \param value_ptr pointer to the value being set.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int fnt_hparam_get(void *context, char *id, void *value_ptr);
+
 /** \brief Provide initial inputs values.
  * \param context FNT context for method.
  * \param vec Pointer to input vector being seeded.
@@ -54,7 +68,7 @@ int fnt_seed(void *context, double *vec);
 
 /** \brief Get next input vector to try
  * \param context FNT context for method.
- * \param vec Pointer to allocated input vector.
+ * \param vec Pointer to allocated input vector to be filled in.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int fnt_next(void *context, double *vec);
@@ -73,7 +87,16 @@ int fnt_set_value(void *context, double *vec, double value);
  */
 int fnt_done(void *context);
 
+/** \brief Get best input vector (i.e., the one that produced the lowest objective function value).
+ * \param context FNT context for method.
+ * \param vec Pointer to allocated input vector to be filled in.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int fnt_best(void *context, double *vec);
+
 /** \brief Produce final result from method,
  * \param context FNT context for which fnt_done returns FNT_DONE.
+ * \param extra Method dependant.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_result(void *context);
+int fnt_result(void *context, void *extra);
