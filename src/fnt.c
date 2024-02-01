@@ -102,6 +102,7 @@ int fnt_method_list_add(context_t *ctx, fnt_method_list_entry_t *entry) {
             }
             return FNT_FAILURE;
         }
+        ctx->methods_list.entries = ptr;
     }
 
     int pos = ctx->methods_list.count;
@@ -299,8 +300,9 @@ int fnt_set_method(void *context, char *name, int dimensions) {
 
 
 int fnt_free(void **context) {
-    context_t *ctx = (context_t*)context;
-    if( ctx == NULL )               { return FNT_FAILURE; }
+    if( context == NULL )   { return FNT_FAILURE; }
+    context_t *ctx = *(context_t**)context;
+    if( ctx == NULL )       { return FNT_FAILURE; }
 
     int ret = FNT_SUCCESS;
     if( ctx->method.free != NULL )  {
