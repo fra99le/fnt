@@ -7,9 +7,11 @@
 
 #include <float.h>
 #include <stdio.h>
+#include "../fnt.h"
 #include "../fnt_util.h"
 #include "../fnt_vect.h"
 
+extern int fnt_verbose_level;
 
 /* MARK: Sample types */
 
@@ -88,9 +90,10 @@ void nm_simplex_sort(nm_simplex_t *simplex) {
         }
     }
     fnt_vect_free(&tmp.parameters);
-    #if 0
-    nm_simplex_print(simplex);
-    #endif /* 0 */
+
+    if( fnt_verbose_level >= 3 ) {
+        nm_simplex_print(simplex);
+    }
 }
 
 
@@ -121,12 +124,31 @@ typedef struct nelder_mead {
     double beta;
     double gamma;
     double delta;
+
+    /* termination criteria */
+    double dist_threshold;
+    int max_iterations;
+
 } nelder_mead_t;
 
 
 /* MARK: Nelder-Mead function */
 
-void nm_init(void **nm_ptr, int dimensions) {
+/* \brief Provides the name of the method.
+ * \param name Allocated buffer to hold the name.
+ * \param size Size of the name buffer in bytes.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int method_name(char *name, int size) {
+    if( strlcpy(name,"nelder-mead",size) >= size ) {
+        return FNT_FAILURE;
+    }
+
+    return FNT_SUCCESS;
+}
+
+
+int method_init(void **nm_ptr, int dimensions) {
     nelder_mead_t *nm = calloc(1, sizeof(nelder_mead_t));
     *nm_ptr = nm;
     memset(nm, '\0', sizeof(*nm));
@@ -134,6 +156,10 @@ void nm_init(void **nm_ptr, int dimensions) {
     nm->dimensions = dimensions;
     nm->iterations = 0;
     nm->state = initial;
+
+    /* termination critria */
+    nm->dist_threshold = 1e-5;
+    nm->max_iterations = 30;
 
     nm->alpha = 1;      /* \alpha > 0 */
     nm->beta = 0.5;     /* 0 < \beta < 1 */
@@ -147,11 +173,13 @@ void nm_init(void **nm_ptr, int dimensions) {
     fnt_vect_calloc(&nm->s_shrink, dimensions);
 
     nm_simplex_init(&nm->simplex, dimensions);
+
+    return FNT_SUCCESS;
 }
 
 
-void nm_free(void *nm_ptr) {
-    nelder_mead_t *nm = nm_ptr;
+int method_free(void **nm_ptr) {
+    nelder_mead_t *nm = *nm_ptr;
 
     fnt_vect_free(&nm->seed);
     fnt_vect_free(&nm->x_r.parameters);
@@ -162,13 +190,92 @@ void nm_free(void *nm_ptr) {
     nm_simplex_free(&nm->simplex);
 
     free(nm); nm=NULL;
+
+    return FNT_SUCCESS;
 }
 
 
-void nm_set_seed(void *nm_ptr, fnt_vect_t *seed) {
+ 
+int method_info(void *nm_ptr) {
+    /* argument isn't used, but is there for consistency. */
+
+    /* TODO: Write info section for Nelder-Mead. */
+    /* don't forget to describe hyper-parameters and their ranges */
+    printf("Nelder-Mead info still needs to be filled in.\n");
+
+    return FNT_FAILURE;
+}
+
+
+int method_hparam_set(void *nm_ptr, char *id, void *value_ptr) {
+    if( nm_ptr == NULL )    { return FNT_FAILURE; }
+    if( id == NULL )        { return FNT_FAILURE; }
+    if( value_ptr == NULL ) { return FNT_FAILURE; }
+    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
+
+    /* TODO: Add bounds checks for hparams */
+    if( strncmp("alpha", id, 5) == 0 ) {
+        nm->alpha = (double)(*((double*)value_ptr));
+        return FNT_SUCCESS;
+    }
+    if( strncmp("beta", id, 4) == 0 ) {
+        nm->beta = (double)(*((double*)value_ptr));
+        return FNT_SUCCESS;
+    }
+    if( strncmp("gamma", id, 5) == 0 ) {
+        nm->gamma = (double)(*((double*)value_ptr));
+        return FNT_SUCCESS;
+    }
+    if( strncmp("delta", id, 5) == 0 ) {
+        nm->delta = (double)(*((double*)value_ptr));
+        return FNT_SUCCESS;
+    }
+
+    if( fnt_verbose_level >= 1 ) {
+        fprintf(stderr, "No hyper-parameter '%s'.\n", id);
+    }
+
+    return FNT_FAILURE;
+}
+
+
+int method_hparam_get(void *nm_ptr, char *id, void *value_ptr) {
+    if( nm_ptr == NULL )    { return FNT_FAILURE; }
+    if( id == NULL )        { return FNT_FAILURE; }
+    if( value_ptr == NULL ) { return FNT_FAILURE; }
+    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
+
+    if( strncmp("alpha", id, 5) == 0 ) {
+        *((double*)value_ptr) = nm->alpha;
+        return FNT_SUCCESS;
+    }
+    if( strncmp("beta", id, 4) == 0 ) {
+        *((double*)value_ptr) = nm->beta;
+        return FNT_SUCCESS;
+    }
+    if( strncmp("gamma", id, 5) == 0 ) {
+        *((double*)value_ptr) = nm->gamma;
+        return FNT_SUCCESS;
+    }
+    if( strncmp("delta", id, 5) == 0 ) {
+        *((double*)value_ptr) = nm->delta;
+        return FNT_SUCCESS;
+    }
+
+    if( fnt_verbose_level >= 1 ) {
+        fprintf(stderr, "No hyper-parameter '%s'.\n", id);
+    }
+
+    return FNT_FAILURE;
+}
+
+
+int method_seed(void *nm_ptr, fnt_vect_t *seed) {
     nelder_mead_t *nm = nm_ptr;
-    if( nm->state != initial ) { return; }
+    if( nm->state != initial ) { return FNT_FAILURE; }
     fnt_vect_copy(&nm->seed, seed);
+
+    return FNT_SUCCESS;
 }
 
 
@@ -189,7 +296,11 @@ void nm_best_point(void *nm_ptr, fnt_vect_t *result) {
 }
 
 
-void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
+int method_value(void *nm_ptr, fnt_vect_t *parameters, double value) {
+    if( nm_ptr == NULL )        { return FNT_FAILURE; }
+    if( parameters == NULL )    { return FNT_FAILURE; }
+    if( parameters->v == NULL ) { return FNT_FAILURE; }
+
     nelder_mead_t *nm = nm_ptr;
 
     nm->iterations += 1;
@@ -204,12 +315,12 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
         nm_sample_copy(&nm->simplex.points[nm->simplex.count-2], &new_sample);
         nm->state = reflect;
         fnt_vect_free(&new_sample.parameters);
-        return;
+        return FNT_SUCCESS;
     } else if( nm->state == shrink ) {
         nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &new_sample);
         nm->state = shrink2;
         fnt_vect_free(&new_sample.parameters);
-        return;
+        return FNT_SUCCESS;
     }
 
     /* check for initialization state */
@@ -218,10 +329,10 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
         if( nm->simplex.count >= nm->dimensions+1 )
             nm->state = reflect;
         fnt_vect_free(&new_sample.parameters);
-        return;
+        return FNT_SUCCESS;
     }
 
-    /* sort simple */
+    /* sort simplex */
     if( nm->state != shrink && nm->state != shrink2 )
         nm_simplex_sort(&nm->simplex);
 
@@ -246,12 +357,12 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
     fnt_vect_free(&s.parameters);
     fnt_vect_free(&l.parameters);
 
-    #if 0
-    printf("f(h) = %g\n", h.value);
-    printf("f(s) = %g\n", s.value);
-    printf("f(l) = %g\n", l.value);
-    printf("f(r) = %g\n", r.value);
-    #endif /* 0 */
+    if( fnt_verbose_level >= 3 ) {
+        printf("f(h) = %g\n", h.value);
+        printf("f(s) = %g\n", s.value);
+        printf("f(l) = %g\n", l.value);
+        printf("f(r) = %g\n", r.value);
+    }
 
     /* deal with recently computed point based on state */
     if( nm->state == reflect ) {
@@ -261,7 +372,7 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
             /* accept x_r and terminate iteration */
             nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &r);
             fnt_vect_free(&r.parameters);
-            return;
+            return FNT_SUCCESS;
         }
     }
 
@@ -278,7 +389,7 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
 
         nm->state = reflect;
         fnt_vect_free(&r.parameters);
-        return;
+        return FNT_SUCCESS;
     }
 
     if( nm->state == contract_out ) {
@@ -289,7 +400,7 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
             nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
             nm->state = reflect;
             fnt_vect_free(&r.parameters);
-            return;
+            return FNT_SUCCESS;
         }
     }
 
@@ -301,7 +412,7 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
             nm_sample_copy(&nm->simplex.points[nm->simplex.count-1], &nm->x_c);
             nm->state = reflect;
             fnt_vect_free(&r.parameters);
-            return;
+            return FNT_SUCCESS;
         }
     }
     fnt_vect_free(&r.parameters);
@@ -310,25 +421,26 @@ void nm_add_result(void *nm_ptr, fnt_vect_t *parameters, double value) {
     if( r.value < l.value ) {
         /* cause x_e to be computed next */
         nm->state = expand;
-        return;
+        return FNT_SUCCESS;
     } else if( r.value >= s.value ) {
         /* cause x_c to be computed next */
         if( s.value <= r.value && r.value < h.value )
             nm->state = contract_out;
         else
             nm->state = contract_in;
-        return;
+        return FNT_SUCCESS;
     }
 
     nm->state = shrink;
-    return;
+    return FNT_SUCCESS;
 }
 
 
-void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
+int method_next(void *nm_ptr, fnt_vect_t *vector) {
     nelder_mead_t *nm = nm_ptr;
 
     if( nm->state == initial && nm->simplex.count < nm->dimensions+1 ) {
+
         /* add new initial point */
         if( nm->simplex.count > 0 ) {
             int pos = nm->simplex.count-1;
@@ -339,13 +451,14 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
         } else {
             fnt_vect_copy(&nm->seed, vector);
         }
-        return;
+
+        return FNT_SUCCESS;
     }
 
     /* check to see that we have correct number of points */
     if( nm->simplex.count != nm->dimensions+1 ) {
         fnt_vect_copy(vector, &nm->seed);
-        return;
+        return FNT_SUCCESS;
     }
 
     /* sort simplex */
@@ -364,13 +477,13 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
     nm_sample_copy(&l, &nm->simplex.points[0]);
 
     /* compute centroid */
-    fnt_vect_t c, sum_vect;
-    fnt_vect_calloc(&c, nm->dimensions);
+    fnt_vect_t centroid, sum_vect;
+    fnt_vect_calloc(&centroid, nm->dimensions);
     fnt_vect_calloc(&sum_vect, nm->dimensions);
     for(int i=0; i<nm->simplex.count-1; ++i) {
         fnt_vect_add(&sum_vect, &nm->simplex.points[i].parameters, &sum_vect);
     }
-    fnt_vect_scale(&sum_vect, 1.0/(nm->simplex.count-1), &c);
+    fnt_vect_scale(&sum_vect, 1.0/(nm->simplex.count-1), &centroid);
     fnt_vect_free(&sum_vect);
 
     /* add appropriate new point(s) */
@@ -380,27 +493,30 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
     switch( nm->state ) {
         case initial:
             /* initial is handled above */
-            printf("This should never happen!\n");
+            if( fnt_verbose_level >= 1 ) {
+                fprintf(stderr, "In initial state after bootstapping phase.\n");
+                fprintf(stderr, "This should never happen!\n");
+            }
             break;
         case reflect:
-            fnt_vect_sub(&c, &h.parameters, &tmp);
+            fnt_vect_sub(&centroid, &h.parameters, &tmp);
             fnt_vect_scale(&tmp, nm->alpha, &scaled);
-            fnt_vect_add(&c, &scaled, vector);    /* x_r */
+            fnt_vect_add(&centroid, &scaled, vector);    /* x_r */
             break;
         case expand:
-            fnt_vect_sub(&nm->x_r.parameters, &c, &tmp);
+            fnt_vect_sub(&nm->x_r.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->gamma, &scaled);
-            fnt_vect_add(&c, &scaled, vector);    /* x_e */
+            fnt_vect_add(&centroid, &scaled, vector);    /* x_e */
             break;
         case contract_out:
-            fnt_vect_sub(&nm->x_r.parameters, &c, &tmp);
+            fnt_vect_sub(&nm->x_r.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->beta, &scaled);
-            fnt_vect_add(&c, &scaled, vector);    /* x_c */
+            fnt_vect_add(&centroid, &scaled, vector);    /* x_c */
             break;
         case contract_in:
-            fnt_vect_sub(&h.parameters, &c, &tmp);
+            fnt_vect_sub(&h.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->beta, &scaled);
-            fnt_vect_add(&c, &scaled, vector);    /* x_c */
+            fnt_vect_add(&centroid, &scaled, vector);    /* x_c */
             break;
         case shrink:
             /* store one shrink point for state shrink2 */
@@ -419,12 +535,16 @@ void nm_next_point(void *nm_ptr, fnt_vect_t *vector) {
     }
     fnt_vect_free(&tmp);
     fnt_vect_free(&scaled);
-    fnt_vect_free(&c);
+    fnt_vect_free(&centroid);
     fnt_vect_free(&h.parameters);
     fnt_vect_free(&s.parameters);
     fnt_vect_free(&l.parameters);
 
-    return;
+    if( fnt_verbose_level >= 3 ) {
+        fnt_vect_println(vector, "next x ", "%.3f");
+    }
+
+    return FNT_SUCCESS;
 }
 
 
@@ -442,14 +562,18 @@ int nm_simplex_point(void *nm_ptr, int which, fnt_vect_t *point, double *value) 
 }
 
 
-int nm_done(void *nm_ptr, double threshold, int iterations) {
+int method_done(void *nm_ptr) {
     nelder_mead_t *nm = nm_ptr;
-    if( nm->state == initial )
-        return 0;
+    if( nm->state == initial ) {
+        return FNT_CONTINUE;
+    }
 
     /* check maximum iterations */
-    if( nm->iterations > iterations ) {
-        return 1;
+    if( nm->iterations > nm->max_iterations ) {
+        if( fnt_verbose_level >= 3 ) {
+            printf("Iteration count (%i) exceeded limit (%i).\n", nm->iterations, nm->max_iterations); 
+        }
+        return FNT_DONE;
     }
 
     /* check distance between best and worst parameters */
@@ -461,9 +585,12 @@ int nm_done(void *nm_ptr, double threshold, int iterations) {
     #if 0
     printf("iteration: %i; dist: %g\n", nm->iterations, dist);
     #endif /* 0 */
-    if( dist < threshold ) {
-        return 1;
+    if( dist < nm->dist_threshold ) {
+        if( fnt_verbose_level >= 3 ) {
+            printf("Simplex size limit (%g) reached (%g).\n", nm->dist_threshold, dist); 
+        }
+        return FNT_DONE;
     }
 
-    return 0;
+    return FNT_CONTINUE;
 }

@@ -4,10 +4,18 @@
  *
  * Copyright (c) 2024 Bryan Franklin. All rights reserved.
  */
+#ifndef FNT_H
+#define FNT_H
 
-#define FNT_SUCCESS 0
-#define FNT_FAILURE 1
-#define FNT_DONE    2
+#include "fnt_util.h"
+#include "fnt_vect.h"
+
+#define FNT_SUCCESS     0
+#define FNT_FAILURE     1
+#define FNT_CONTINUE    2
+#define FNT_DONE        3
+
+extern int fnt_verbose_level;
 
 /** \brief Creates an opaque context handle.
  * \param context Pointer to a void* to be assigned to the context.
@@ -64,14 +72,14 @@ int fnt_hparam_get(void *context, char *id, void *value_ptr);
  * \param vec Pointer to input vector being seeded.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_seed(void *context, double *vec);
+int fnt_seed(void *context, fnt_vect_t *vec);
 
 /** \brief Get next input vector to try
  * \param context FNT context for method.
  * \param vec Pointer to allocated input vector to be filled in.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_next(void *context, double *vec);
+int fnt_next(void *context, fnt_vect_t *vec);
 
 /** \brief Provide the value of the objective function for input vector.
  * \param context FNT context for method.
@@ -79,7 +87,7 @@ int fnt_next(void *context, double *vec);
  * \param value Value of objective function (i.e., f(v)).
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_set_value(void *context, double *vec, double value);
+int fnt_set_value(void *context, fnt_vect_t *vec, double value);
 
 /** \brief Check if method had completed.
  * \param context FNT context to be checked.
@@ -92,7 +100,7 @@ int fnt_done(void *context);
  * \param vec Pointer to allocated input vector to be filled in.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_best(void *context, double *vec);
+int fnt_best(void *context, fnt_vect_t *vec);
 
 /** \brief Produce final result from method,
  * \param context FNT context for which fnt_done returns FNT_DONE.
@@ -100,3 +108,5 @@ int fnt_best(void *context, double *vec);
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int fnt_result(void *context, void *extra);
+
+#endif /* FNT_H */

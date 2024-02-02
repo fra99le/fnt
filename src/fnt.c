@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "fnt.h"
+#include "fnt_vect.h"
 
 /* MARK: Internal constants */
 
@@ -20,7 +21,7 @@
 
 /* MARK: Internal variables */
 
-static int fnt_verbose_level = 1;   /* default to showing errors */
+int fnt_verbose_level = 1;   /* default to showing errors */
 
 /* MARK: Internal structures */
 
@@ -29,31 +30,36 @@ typedef struct fnt_method_list_entry {
     char path[PATH_MAX];
 } fnt_method_list_entry_t;
 
+
 typedef struct fnt_method_list {
     int count;
     int capacity;
     fnt_method_list_entry_t *entries;
 } fnt_method_list_t;
 
+
 typedef struct fnt_method {
     char name[FNT_MAX_NAME_LENGTH];
-    int (*init)();
-    int (*info)();
-    int (*hparam_set)(char *id, void *value_ptr);
-    int (*hparam_get)(char *id, void *value_ptr);
-    int (*seed)(double *vec);
-    int (*next)(double *vec);
-    int (*value)(double *vec, double value);
-    int (*done)();
-    int (*result)(void*);
-    int (*free)();
+    void *handle;
+    int (*init)(void **handle, int dimensions);
+    int (*free)(void **handle);
+    int (*info)(void *handle);
+    int (*hparam_set)(void *handle, char *id, void *value_ptr);
+    int (*hparam_get)(void *handle, char *id, void *value_ptr);
+    int (*seed)(void *handle, fnt_vect_t *vec);
+    int (*next)(void *handle, fnt_vect_t *vec);
+    int (*value)(void *handle, fnt_vect_t *vec, double value);
+    int (*done)(void *handle);
+    int (*result)(void *handle, void*);
 } fnt_method_t;
+
 
 typedef struct vector_queue_node {
     double *vector;
     int len;
     struct vector_queue_node *next;
 } vector_queue_node_t;
+
 
 typedef struct fnt_context {
     /* list of available methods */
@@ -249,26 +255,36 @@ int fnt_method_load(context_t *ctx, char *filename) {
     int (*method_name)(char *, int) = dlsym(dl_handle, "method_name");
     method_name(ctx->method.name, sizeof(ctx->method.name));
     ctx->method.init = dlsym(dl_handle, "method_init");
+    ctx->method.free = dlsym(dl_handle, "method_free");
     ctx->method.info = dlsym(dl_handle, "method_info");
     ctx->method.hparam_get = dlsym(dl_handle, "method_hparam_get");
     ctx->method.hparam_set = dlsym(dl_handle, "method_hparam_set");
+    ctx->method.seed = dlsym(dl_handle, "method_seed");
     ctx->method.next = dlsym(dl_handle, "method_next");
     ctx->method.value = dlsym(dl_handle, "method_value");
     ctx->method.done = dlsym(dl_handle, "method_done");
     ctx->method.result = dlsym(dl_handle, "method_result");
-    ctx->method.free = dlsym(dl_handle, "method_free");
 
     if( ctx->method.next == NULL
         || ctx->method.value == NULL
         || ctx->method.done == NULL ) {
-        fprintf(stderr, "ERROR: '%s' does not have all required methods.\n", filename);
+        if( fnt_verbose_level >= 1 ) {
+            fprintf(stderr, "ERROR: '%s' does not have all required methods.\n", filename);
+            if( ctx->method.next == NULL )
+                fprintf(stderr, "\tMISSING method_next(void*, fnt_vect_t*)\n");
+            if( ctx->method.value == NULL )
+                fprintf(stderr, "\tMISSING method_value(void*, fnt_vect_t*, double)\n");
+            if( ctx->method.done == NULL )
+                fprintf(stderr, "\tMISSING method_done(void*)\n");
+        }
         dlclose(dl_handle); ctx->dl_handle = dl_handle = NULL;
+
         return FNT_FAILURE;
     }
 
     /* TODO: Need to set default versions of optional methods. */
 
-    return ctx->method.init();
+    return FNT_SUCCESS;
 }
 
 /* MARK: User callable functions */
@@ -306,7 +322,25 @@ int fnt_set_method(void *context, char *name, int dimensions) {
 
         if( strncmp(ctx->methods_list.entries[i].name, name,
                 sizeof(ctx->methods_list.entries[i].name)) == 0 ) {
-            return fnt_method_load(ctx, ctx->methods_list.entries[i].path);
+            int ret = fnt_method_load(ctx, ctx->methods_list.entries[i].path);
+
+            if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
+                printf("Loaded method '%s'.\n", ctx->method.name);
+            } else if( ret == FNT_FAILURE && fnt_verbose_level >= 1 ) {
+                fprintf(stderr, "ERROR: Loading method '%s' failed..\n", ctx->method.name);
+                continue;   /* keep looking for one that might work */
+            }
+
+            ret = ctx->method.init(&ctx->method.handle, dimensions);
+
+            if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
+                printf("Initialized method '%s' for %i dimensional inputs.\n", ctx->method.name, dimensions);
+            } else if( ret == FNT_FAILURE && fnt_verbose_level >= 1 ) {
+                fprintf(stderr, "ERROR: Initialization of method '%s' failed..\n", ctx->method.name);
+                continue;   /* keep looking for one that might work */
+            }
+
+            return ret;
         }
     }
 
@@ -321,7 +355,7 @@ int fnt_free(void **context) {
 
     int ret = FNT_SUCCESS;
     if( ctx->method.free != NULL )  {
-        ret = ctx->method.free();
+        ret = ctx->method.free(ctx->method.handle);
 
         if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
             printf("Freed intenally allocated values for method '%s'.\n", ctx->method.name);
@@ -361,18 +395,18 @@ int fnt_info(void *context) {
         return FNT_FAILURE;
     }
 
-    return ctx->method.info();
+    return ctx->method.info(ctx->method.handle);
 }
 
 
 int fnt_hparam_set(void *context, char *id, void *value_ptr) {
+    if( context == NULL )                   { return FNT_FAILURE; }
     context_t *ctx = (context_t*)context;
-    if( ctx == NULL )                       { return FNT_FAILURE; }
     if( ctx->method.hparam_set == NULL )    { return FNT_FAILURE; }
     if( id == NULL )                        { return FNT_FAILURE; }
     if( value_ptr == NULL )                 { return FNT_FAILURE; }
 
-    int ret = ctx->method.hparam_set(id, value_ptr);
+    int ret = ctx->method.hparam_set(ctx->method.handle, id, value_ptr);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
         printf("Set hyper-parameter '%s'.\n", id);
@@ -391,7 +425,7 @@ int fnt_hparam_get(void *context, char *id, void *value_ptr) {
     if( id == NULL )                        { return FNT_FAILURE; }
     if( value_ptr == NULL )                 { return FNT_FAILURE; }
 
-    int ret = ctx->method.hparam_get(id, value_ptr);
+    int ret = ctx->method.hparam_get(ctx->method.handle, id, value_ptr);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
         printf("Got hyper-parameter '%s'.\n", id);
@@ -403,13 +437,19 @@ int fnt_hparam_get(void *context, char *id, void *value_ptr) {
 }
 
 
-int fnt_seed(void *context, double *vec) {
+int fnt_seed(void *context, fnt_vect_t *vec) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.seed == NULL )  { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
 
-    int ret = ctx->method.seed(vec);
+    if( ctx->method.seed == NULL
+        && fnt_verbose_level >= 1 ) {
+        fprintf(stderr, "ERROR: Method '%s' does not provide a seed method.\n", ctx->method.name);
+        return FNT_FAILURE;
+    }
+
+    int ret = ctx->method.seed(ctx->method.handle, vec);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
         printf("Seeded input vector.\n");
@@ -421,34 +461,35 @@ int fnt_seed(void *context, double *vec) {
 }
 
 
-int fnt_next(void *context, double *vec) {
+int fnt_next(void *context, fnt_vect_t *vec) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.next == NULL )  { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
 
-    int ret =  ctx->method.next(vec);
+    int ret =  ctx->method.next(ctx->method.handle, vec);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 3 ) {
         printf("DEBUG: Retrieved next input vector.\n");
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= 1 ) {
-        fprintf(stderr, "ERROR: Failed to retreive next input vector.\n");
+        fprintf(stderr, "ERROR: Failed to retrieve next input vector.\n");
     }
 
     return ret;
 }
 
 
-int fnt_set_value(void *context, double *vec, double value) {
+int fnt_set_value(void *context, fnt_vect_t *vec, double value) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.value == NULL ) { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
 
-    int ret = ctx->method.value(vec, value);;
+    int ret = ctx->method.value(ctx->method.handle, vec, value);;
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 3 ) {
-        printf("DEBUG: Set objective function value for input vector.\n");
+        printf("DEBUG: Set objective function value (%g)", value);
+        fnt_vect_println(vec, " for input ", "%.2f");
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= 1 ) {
         fprintf(stderr, "ERROR: Failed to set objective value for input vector.\n");
     }
@@ -462,7 +503,7 @@ int fnt_done(void *context) {
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.done == NULL )  { return FNT_FAILURE; }
 
-    int ret = ctx->method.done();
+    int ret = ctx->method.done(ctx->method.handle);
 
     if( ret == FNT_DONE && fnt_verbose_level >= 3 ) {
         printf("DEBUG: Method '%s' has finished.\n", ctx->method.name);
@@ -474,7 +515,7 @@ int fnt_done(void *context) {
 }
 
 
-int fnt_best(void *context, double *vec) {
+int fnt_best(void *context, fnt_vect_t *vec) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.next == NULL )  { return FNT_FAILURE; }
@@ -486,7 +527,7 @@ int fnt_best(void *context, double *vec) {
     if( ret == FNT_SUCCESS && fnt_verbose_level >= 3 ) {
         printf("DEBUG: Retrieved best input vector.\n");
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= 1 ) {
-        fprintf(stderr, "ERROR: Failed to retreive best input vector.\n");
+        fprintf(stderr, "ERROR: Failed to retrieve best input vector.\n");
     }
 
     return ret;
@@ -499,7 +540,7 @@ int fnt_result(void *context, void *extra) {
     if( ctx->method.result == NULL )    { return FNT_FAILURE; }
     /* extra can be NULL when method doesn't return a result. */
 
-    int ret = ctx->method.result(extra);
+    int ret = ctx->method.result(ctx->method.handle, extra);
 
     if( ret == FNT_DONE && fnt_verbose_level >= 3 ) {
         printf("DEBUG: Method '%s' has finished.\n", ctx->method.name);
