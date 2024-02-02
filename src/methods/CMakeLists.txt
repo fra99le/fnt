@@ -24,4 +24,8 @@ foreach(SRC ${SOURCE_FILES})
     message(BASE="${BASE}")
     add_library(${BASE} MODULE ${SRC})
     set_property(TARGET ${BASE} PROPERTY C_STANDARD 99)
+
+    # add common system libraries
+    target_link_libraries(${BASE} dl)
+    target_link_libraries(${BASE} m)
 endforeach(SRC)

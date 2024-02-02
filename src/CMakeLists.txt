@@ -36,6 +36,10 @@ target_link_libraries(libfnt m)
 add_subdirectory(methods)
 add_subdirectory(tests)
 
+# add common system libraries
+target_link_libraries(libfnt dl)
+target_link_libraries(libfnt m)
+
 # add a target to remove files cmake creates
 add_custom_target(full-clean
                   COMMAND bash -c 'rm -frv CMakeCache.txt CMakeFiles Makefile; rm -fvf CMake*.log'

@@ -26,4 +26,8 @@ foreach(SRC ${SOURCE_FILES})
     add_dependencies(${BASE} libfnt)
     target_link_libraries(${BASE} libfnt)
     set_property(TARGET ${BASE} PROPERTY C_STANDARD 99)
+
+    # add common system libraries
+    target_link_libraries(${BASE} dl)
+    target_link_libraries(${BASE} m)
 endforeach(SRC)
