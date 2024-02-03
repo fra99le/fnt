@@ -213,21 +213,32 @@ int method_hparam_set(void *nm_ptr, char *id, void *value_ptr) {
     if( value_ptr == NULL ) { return FNT_FAILURE; }
     nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
 
-    /* TODO: Add bounds checks for hparams */
     if( strncmp("alpha", id, 5) == 0 ) {
         nm->alpha = (double)(*((double*)value_ptr));
+        if( nm->alpha <= 0.0 && fnt_verbose_level >= FNT_WARN ) {
+            fprintf(stderr, "WARN: alpha should be >0, currently set to %g\n", nm->alpha);
+        }
         return FNT_SUCCESS;
     }
     if( strncmp("beta", id, 4) == 0 ) {
         nm->beta = (double)(*((double*)value_ptr));
+        if( (nm->beta <= 0.0 || nm->beta >= 1.0) && fnt_verbose_level >= FNT_WARN ) {
+            fprintf(stderr, "WARN: beta should be >0 and <1, currently set to %g\n", nm->beta);
+        }
         return FNT_SUCCESS;
     }
     if( strncmp("gamma", id, 5) == 0 ) {
         nm->gamma = (double)(*((double*)value_ptr));
+        if( nm->gamma <= 1.0 && fnt_verbose_level >= FNT_WARN ) {
+            fprintf(stderr, "WARN: gamma should be >1, currently set to %g\n", nm->gamma);
+        }
         return FNT_SUCCESS;
     }
     if( strncmp("delta", id, 5) == 0 ) {
         nm->delta = (double)(*((double*)value_ptr));
+        if( (nm->delta <= 0.0 || nm->delta >= 1.0) && fnt_verbose_level >= FNT_WARN ) {
+            fprintf(stderr, "WARN: delta should be >0 and <1, currently set to %g\n", nm->delta);
+        }
         return FNT_SUCCESS;
     }
 
