@@ -350,12 +350,12 @@ int fnt_set_method(void *context, char *name, int dimensions) {
 
 int fnt_free(void **context) {
     if( context == NULL )   { return FNT_FAILURE; }
-    context_t *ctx = *(context_t**)context;
+    context_t *ctx = (context_t*)*context;
     if( ctx == NULL )       { return FNT_FAILURE; }
 
     int ret = FNT_SUCCESS;
     if( ctx->method.free != NULL )  {
-        ret = ctx->method.free(ctx->method.handle);
+        ret = ctx->method.free(&ctx->method.handle);
 
         if( ret == FNT_SUCCESS && fnt_verbose_level >= 2 ) {
             printf("Freed intenally allocated values for method '%s'.\n", ctx->method.name);
