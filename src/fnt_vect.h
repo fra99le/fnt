@@ -82,7 +82,7 @@ static int fnt_vect_calloc(fnt_vect_t *vec, int length) {
     if( vec == NULL )   { return FNT_VEC_FAILURE; }
 
     if( (vec->v = calloc(length, sizeof(double))) == NULL ) {
-        if( fnt_verbose_level >= 1 ) {
+        if( fnt_verbose_level >= FNT_ERROR ) {
             perror("calloc");
         }
         return FNT_VEC_FAILURE;
@@ -123,7 +123,7 @@ static int fnt_vect_copy(fnt_vect_t *dst, fnt_vect_t *src) {
     if( src->v == NULL )    { return FNT_VEC_FAILURE; }
 
     if( dst->n != src->n ) {
-        if( fnt_verbose_level >= 1 ) {
+        if( fnt_verbose_level >= FNT_ERROR ) {
             fprintf(stderr, "%s: source length (%zu) differant than destination length (%zu).", __FUNCTION__, src->n, dst->n);
         }
 

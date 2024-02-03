@@ -91,7 +91,7 @@ void nm_simplex_sort(nm_simplex_t *simplex) {
     }
     fnt_vect_free(&tmp.parameters);
 
-    if( fnt_verbose_level >= 3 ) {
+    if( fnt_verbose_level >= FNT_DEBUG ) {
         nm_simplex_print(simplex);
     }
 }
@@ -231,7 +231,7 @@ int method_hparam_set(void *nm_ptr, char *id, void *value_ptr) {
         return FNT_SUCCESS;
     }
 
-    if( fnt_verbose_level >= 1 ) {
+    if( fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "No hyper-parameter '%s'.\n", id);
     }
 
@@ -262,7 +262,7 @@ int method_hparam_get(void *nm_ptr, char *id, void *value_ptr) {
         return FNT_SUCCESS;
     }
 
-    if( fnt_verbose_level >= 1 ) {
+    if( fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "No hyper-parameter '%s'.\n", id);
     }
 
@@ -351,18 +351,25 @@ int method_value(void *nm_ptr, fnt_vect_t *parameters, double value) {
     nm_sample_copy(&r, &new_sample);
     fnt_vect_free(&new_sample.parameters);
 
+    if( fnt_verbose_level >= FNT_DEBUG ) {
+        fnt_vect_print(&h.parameters, "f(h) = f(", "%.3f");
+        printf(") = %g\n", h.value);
+
+        fnt_vect_print(&s.parameters, "f(s) = f(", "%.3f");
+        printf(") = %g\n", s.value);
+
+        fnt_vect_print(&l.parameters, "f(l) = f(", "%.3f");
+        printf(") = %g\n", l.value);
+
+        fnt_vect_print(&r.parameters, "f(r) = f(", "%.3f");
+        printf(") = %g\n", r.value);
+    }
+
     /* actual parameters can be discarded,
      * as only the output values are needed here */
     fnt_vect_free(&h.parameters);
     fnt_vect_free(&s.parameters);
     fnt_vect_free(&l.parameters);
-
-    if( fnt_verbose_level >= 3 ) {
-        printf("f(h) = %g\n", h.value);
-        printf("f(s) = %g\n", s.value);
-        printf("f(l) = %g\n", l.value);
-        printf("f(r) = %g\n", r.value);
-    }
 
     /* deal with recently computed point based on state */
     if( nm->state == reflect ) {
@@ -440,6 +447,9 @@ int method_next(void *nm_ptr, fnt_vect_t *vector) {
     nelder_mead_t *nm = nm_ptr;
 
     if( nm->state == initial && nm->simplex.count < nm->dimensions+1 ) {
+        if( fnt_verbose_level >= FNT_DEBUG ) {
+            printf("state: Initial, count=%d\n", nm->simplex.count);
+        }
 
         /* add new initial point */
         if( nm->simplex.count > 0 ) {
@@ -493,32 +503,37 @@ int method_next(void *nm_ptr, fnt_vect_t *vector) {
     switch( nm->state ) {
         case initial:
             /* initial is handled above */
-            if( fnt_verbose_level >= 1 ) {
+            if( fnt_verbose_level >= FNT_ERROR ) {
                 fprintf(stderr, "In initial state after bootstapping phase.\n");
                 fprintf(stderr, "This should never happen!\n");
             }
             break;
         case reflect:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: reflect\n"); }
             fnt_vect_sub(&centroid, &h.parameters, &tmp);
             fnt_vect_scale(&tmp, nm->alpha, &scaled);
             fnt_vect_add(&centroid, &scaled, vector);    /* x_r */
             break;
         case expand:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: expand\n"); }
             fnt_vect_sub(&nm->x_r.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->gamma, &scaled);
             fnt_vect_add(&centroid, &scaled, vector);    /* x_e */
             break;
         case contract_out:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: contract_out\n"); }
             fnt_vect_sub(&nm->x_r.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->beta, &scaled);
             fnt_vect_add(&centroid, &scaled, vector);    /* x_c */
             break;
         case contract_in:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: contract_in\n"); }
             fnt_vect_sub(&h.parameters, &centroid, &tmp);
             fnt_vect_scale(&tmp, nm->beta, &scaled);
             fnt_vect_add(&centroid, &scaled, vector);    /* x_c */
             break;
         case shrink:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: shrink (phase 1)\n"); }
             /* store one shrink point for state shrink2 */
             fnt_vect_add(&nm->x_r.parameters, &s.parameters, &tmp);
             fnt_vect_scale(&tmp, 0.5, &nm->s_shrink); /* new s */
@@ -528,6 +543,7 @@ int method_next(void *nm_ptr, fnt_vect_t *vector) {
             fnt_vect_scale(&tmp, 0.5, vector);        /* new h */
             break;
         case shrink2:
+            if( fnt_verbose_level >= FNT_DEBUG ) { printf("state: shrink (phase 2)\n"); }
             /* return second shrink point */
             fnt_vect_copy(vector, &nm->s_shrink);
             fnt_vect_reset(&nm->s_shrink);
@@ -540,7 +556,7 @@ int method_next(void *nm_ptr, fnt_vect_t *vector) {
     fnt_vect_free(&s.parameters);
     fnt_vect_free(&l.parameters);
 
-    if( fnt_verbose_level >= 3 ) {
+    if( fnt_verbose_level >= FNT_INFO ) {
         fnt_vect_println(vector, "next x ", "%.3f");
     }
 
@@ -570,7 +586,7 @@ int method_done(void *nm_ptr) {
 
     /* check maximum iterations */
     if( nm->iterations > nm->max_iterations ) {
-        if( fnt_verbose_level >= 3 ) {
+        if( fnt_verbose_level >= FNT_INFO ) {
             printf("Iteration count (%i) exceeded limit (%i).\n", nm->iterations, nm->max_iterations); 
         }
         return FNT_DONE;
@@ -586,7 +602,7 @@ int method_done(void *nm_ptr) {
     printf("iteration: %i; dist: %g\n", nm->iterations, dist);
     #endif /* 0 */
     if( dist < nm->dist_threshold ) {
-        if( fnt_verbose_level >= 3 ) {
+        if( fnt_verbose_level >= FNT_INFO ) {
             printf("Simplex size limit (%g) reached (%g).\n", nm->dist_threshold, dist); 
         }
         return FNT_DONE;

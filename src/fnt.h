@@ -10,13 +10,6 @@
 #include "fnt_util.h"
 #include "fnt_vect.h"
 
-#define FNT_SUCCESS     0
-#define FNT_FAILURE     1
-#define FNT_CONTINUE    2
-#define FNT_DONE        3
-
-extern int fnt_verbose_level;
-
 /** \brief Creates an opaque context handle.
  * \param context Pointer to a void* to be assigned to the context.
  * \param dimensions Number of elements in an input vector.
@@ -26,11 +19,12 @@ int fnt_init(void **context, char *path);
 
 /** \brief Set the leverl of verbosity.
  * \param verbosity Setls the level of verbosity, higher values are more verbose (default 0).
- *      Level   Description
- *      0       No console output
- *      1       Errors only on stderr
- *      2       Info on stdout
- *      3       Debugging Info on stdout
+ *      Level       Description
+ *      FNT_NONE    No console output
+ *      FNT_ERROR   Errors only on stderr
+ *      FNT_WARN    Errors and Warnings on stderr
+ *      FNT_INFO    Info on stdout
+ *      FNT_DEBUG   Debugging Info on stdout
  * \return Will always return FNT_SUCCESS.
  */
 int fnt_verbose(int verbosity);

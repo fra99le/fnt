@@ -26,9 +26,10 @@ double rosenbrock(double x, double y) {
 }
 
 int main() {
+
     void *fnt = NULL;
 
-    fnt_verbose(1); /* request informative output */
+    fnt_verbose(FNT_DEBUG); /* request informative output */
     fnt_init(&fnt, FNT_METHODS_DIR "/methods");
 
     /* load nelder-mead to minimize Rosenbrock function */
