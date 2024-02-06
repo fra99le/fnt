@@ -52,6 +52,9 @@ typedef struct fnt_method {
     int (*value)(void *handle, fnt_vect_t *vec, double value);
     int (*done)(void *handle);
     int (*result)(void *handle, void*);
+    fnt_vect_t best_x;
+    double best_fx;
+    int has_best;
 } fnt_method_t;
 
 
@@ -372,8 +375,16 @@ int fnt_set_method(void *context, char *name, int dimensions) {
                 continue;   /* keep looking for one that might work */
             }
 
+            /* initialize tracking of best input */
+            fnt_vect_calloc(&ctx->method.best_x, dimensions);
+            ctx->method.best_fx = 0.0;
+            ctx->method.has_best = 0;
+
             return ret;
         }
+    }
+    if( fnt_verbose_level >= FNT_ERROR ) {
+        fprintf(stderr, "Failed to find method '%s'.\n", name);
     }
 
     return FNT_FAILURE;
@@ -553,11 +564,14 @@ int fnt_best(void *context, fnt_vect_t *vec) {
     if( ctx->method.next == NULL )  { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
 
-    /* TODO: add tracking of the best value. */
     int ret = FNT_FAILURE;
+    if( ctx->method.has_best ) {
+        ret = fnt_vect_copy(vec, &ctx->method.best_x);
+    }
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
-        printf("DEBUG: Retrieved best input vector.\n");
+        printf("DEBUG: Retrieved best input vector:");
+        fnt_vect_println(vec, "DEBUG: Retrieved best input vector: ", NULL);
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "ERROR: Failed to retrieve best input vector.\n");
     }
