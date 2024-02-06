@@ -18,6 +18,16 @@
 #define FNT_INFO    3
 #define FNT_DEBUG   4
 
+#define FNT_HPARAM_SET(name, id, type, src_ptr, dst) \
+    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+        (dst) = *(type*)(src_ptr); \
+    }
+
+#define FNT_HPARAM_GET(name, id, type, src, dst_ptr) \
+    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+        *(type*)(dst_ptr) = (src); \
+    }
+
 extern int fnt_verbose_level;
 
 #endif /* FNT_UTIL_H */
