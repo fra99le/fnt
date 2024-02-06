@@ -514,7 +514,8 @@ int fnt_next(void *context, fnt_vect_t *vec) {
     int ret =  ctx->method.next(ctx->method.handle, vec);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
-        printf("DEBUG: Retrieved next input vector.\n");
+        printf("DEBUG: Retrieved next input vector: ");
+        fnt_vect_println(vec, NULL, NULL);
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "ERROR: Failed to retrieve next input vector.\n");
     }
@@ -529,11 +530,17 @@ int fnt_set_value(void *context, fnt_vect_t *vec, double value) {
     if( ctx->method.value == NULL ) { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
 
-    int ret = ctx->method.value(ctx->method.handle, vec, value);;
+    int ret = ctx->method.value(ctx->method.handle, vec, value);
+    if( value < ctx->method.best_fx || ctx->method.has_best == 0 ) {
+        fnt_vect_copy(&ctx->method.best_x, vec);
+        ctx->method.best_fx = value;
+        ctx->method.has_best = 1;
+    }
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
-        printf("DEBUG: Set objective function value (%g)", value);
-        fnt_vect_println(vec, " for input ", "%.2f");
+        printf("DEBUG: Set value of objective function");
+        fnt_vect_print(vec, " for input ", "%.2f");
+        printf(" to %g.\n", value);
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "ERROR: Failed to set objective value for input vector.\n");
     }
@@ -587,11 +594,14 @@ int fnt_result(void *context, void *extra) {
     if( ctx->method.result == NULL )    { return FNT_FAILURE; }
     /* extra can be NULL when method doesn't return a result. */
 
+    if( fnt_done(context) != FNT_DONE && fnt_verbose_level >= FNT_ERROR ) {
+        printf("DEBUG: Method '%s' has not finished yet.\n", ctx->method.name);
+        return FNT_FAILURE;
+    }
+
     int ret = ctx->method.result(ctx->method.handle, extra);
 
-    if( ret == FNT_DONE && fnt_verbose_level >= FNT_DEBUG ) {
-        printf("DEBUG: Method '%s' has finished.\n", ctx->method.name);
-    } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
+    if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
         fprintf(stderr, "ERROR: Method completion check failed.\n");
     }
 
