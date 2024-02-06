@@ -123,12 +123,12 @@ int fnt_method_list_add(context_t *ctx, fnt_method_list_entry_t *entry) {
     }
 
     if( ctx->methods_list.count == ctx->methods_list.capacity ) {
-        size_t new_size = (ctx->methods_list.capacity*2 + 1)
-                                * sizeof(fnt_method_list_entry_t);
+        size_t new_size = (ctx->methods_list.capacity*2 + 1);
         if( fnt_verbose_level >= FNT_DEBUG ) {
             printf("DEBUG: Resizing methods list from %d to %zu\n", ctx->methods_list.capacity, new_size);
         }
-        void *ptr = realloc(ctx->methods_list.entries, new_size);
+        void *ptr = realloc(ctx->methods_list.entries,
+                            new_size * sizeof(fnt_method_list_entry_t));
         if( ptr == NULL )   {
             if( fnt_verbose_level >= FNT_ERROR ) {
                 perror("realloc");
@@ -149,13 +149,13 @@ int fnt_method_list_add(context_t *ctx, fnt_method_list_entry_t *entry) {
 int fnt_method_list_print(context_t *ctx) {
     if( ctx == NULL )   { return FNT_FAILURE; }
 
-    printf("%16s : %s\n","Method","File");
-    printf("---------------- : ----------------\n");
+    printf("%24s : %s\n","Method","File");
+    printf("------------------------ : ------------------------\n");
     for(int i=0; i<ctx->methods_list.count; ++i) {
-        printf("%16s : %s\n", ctx->methods_list.entries[i].name,
+        printf("%24s : %s\n", ctx->methods_list.entries[i].name,
                               ctx->methods_list.entries[i].path);
     }
-    printf("---------------- : ----------------\n");
+    printf("------------------------ : ------------------------\n");
 
     return FNT_SUCCESS;
 }
@@ -193,7 +193,7 @@ int fnt_register_method(context_t *ctx, char *filename) {
     fnt_method_list_add(ctx, entry);
 
     if( fnt_verbose_level >= FNT_INFO ) {
-        printf("\tloaded method '%s' from '%s'.\n", entry->name, filename);
+        printf("\tfound method '%s' in '%s'.\n", entry->name, filename);
     }
 
     dlclose(dl_handle);
@@ -302,6 +302,7 @@ int fnt_method_load(context_t *ctx, char *filename) {
             if( ctx->method.done == NULL )
                 fprintf(stderr, "\tMISSING method_done(void*)\n");
         }
+        memset(&ctx->method, '\0', sizeof(ctx->method));
         dlclose(dl_handle); ctx->dl_handle = dl_handle = NULL;
 
         return FNT_FAILURE;
