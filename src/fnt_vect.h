@@ -10,7 +10,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include "fnt.h"
 
 #define FNT_VEC_SUCCESS 0
 #define FNT_VEC_FAILURE 1
