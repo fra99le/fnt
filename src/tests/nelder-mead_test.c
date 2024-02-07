@@ -30,7 +30,7 @@ int main() {
     double tolerance = 1e-5;
     fnt_hparam_set(fnt, "tolerence", &tolerance);
 
-    /* read an report default hyper-parameters */
+    /* read and report default hyper-parameters */
     double alpha, beta, gamma, delta;
     fnt_hparam_get(fnt, "alpha", &alpha);
     fnt_hparam_get(fnt, "beta", &beta);
@@ -55,7 +55,7 @@ int main() {
 
 
         /* call objective function */
-        double fx = rosenbrock(x.v[0], x.v[1]);
+        double fx = rosenbrock_2d(x.v[0], x.v[1]);
 
         fnt_vect_print(&x, "f(", "%.3f");
         printf(") -> %g\n", fx);
