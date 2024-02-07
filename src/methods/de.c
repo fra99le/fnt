@@ -18,11 +18,17 @@ typedef enum de_state {
 typedef struct de {
     int dim;    /* number of dimensions in parameter vectors */
     de_state_t state;
-    double f_tol;
 
     /* hyper parameters */
+    double f_tol;
     double F;
     double lambda;
+    fnt_vect_t start_point;
+    fnt_vect_t lower_bounds;
+    fnt_vect_t upper_bounds;
+    int has_start_point;
+    int has_lower_bounds;
+    int has_upper_bounds;
 
     /* current generation */
     int NP;
@@ -98,15 +104,54 @@ static int de_fill_first_gen(de_t *ptr) {
     int curr = ptr->current;
 
     /* if an initial value is give, fill based on it. */
+    if( ptr->has_start_point ) {
+        if( fnt_verbose_level >= FNT_DEBUG ) {
+            printf("Filling initial generation using ");
+            fnt_vect_print(&ptr->start_point, "start point: ", NULL);
+            printf(".\n");
+        }
 
-    /* if bounds are providesd, randomly fill based on those */
+        /* pick a point normally distributed around start point */
+        for(int j=0; j<ptr->dim; ++j) {
+            /* TODO: rnd should be normally distributed with a hyper-parameter
+             * specifying the std. dev. */
+            double rnd = FNT_RAND() / (double)FNT_RAND_MAX - 0.5;
+            ptr->v.v[j] = ptr->start_point.v[j]  + rnd;
 
-    /* otherwise just pick random values */
-    if( fnt_verbose_level >= FNT_DEBUG ) {
-        printf("Filling initial generation randomly (curr=%d).\n", curr);
-    }
-    for(int j=0; j<ptr->dim; ++j) {
-        ptr->v.v[j] = rand() / (double)RAND_MAX - 0.5;
+            /* apply bounds, as available */
+            if( ptr->has_lower_bounds
+                && ptr->v.v[j] < ptr->lower_bounds.v[j] ) {
+                ptr->v.v[j] = ptr->lower_bounds.v[j];
+            }
+            if( ptr->has_upper_bounds
+                && ptr->v.v[j] > ptr->upper_bounds.v[j] ) {
+                ptr->v.v[j] = ptr->upper_bounds.v[j];
+            }
+        }
+    } else {
+        if( fnt_verbose_level >= FNT_DEBUG ) {
+            printf("Filling initial generation uniformly randomly (curr=%d).\n", curr);
+        }
+
+        /* pick uniformly random point, applying bounds as supplied. */
+        for(int j=0; j<ptr->dim; ++j) {
+            double rnd = FNT_RAND() / (double)FNT_RAND_MAX;
+            double lower = -1.0;
+            double upper = 1.0;
+            if( ptr->has_lower_bounds) {
+                lower = ptr->lower_bounds.v[j];
+                if( !ptr->has_upper_bounds ) {
+                    upper = lower + 1.0;
+                }
+            }
+            if( ptr->has_upper_bounds) {
+                upper = ptr->upper_bounds.v[j];
+                if( !ptr->has_lower_bounds ) {
+                    lower = lower - 1.0;
+                }
+            }
+            ptr->v.v[j] = lower + rnd * (upper-lower);
+        }
     }
 
     return FNT_SUCCESS;
@@ -167,6 +212,11 @@ int method_free(void **handle_ptr) {
     fnt_vect_free(&ptr->v);
     de_free_generations(ptr);
 
+    /* free vectors, if allocated */
+    if( ptr->has_start_point )  { fnt_vect_free(&ptr->start_point);  }
+    if( ptr->has_lower_bounds ) { fnt_vect_free(&ptr->lower_bounds); }
+    if( ptr->has_upper_bounds ) { fnt_vect_free(&ptr->upper_bounds); }
+
     free(ptr);  *handle_ptr = ptr = NULL;
 
     return FNT_SUCCESS;
@@ -198,6 +248,44 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
     FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
 
+    if( strncmp("start", id, 5) == 0 ) { 
+        if( !ptr->has_start_point ) {
+            fnt_vect_calloc(&ptr->start_point, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->start_point, value_ptr);
+        ptr->has_start_point = 1;
+    }
+
+    if( strncmp("lower", id, 5) == 0 ) { 
+        if( !ptr->has_lower_bounds ) {
+            fnt_vect_calloc(&ptr->lower_bounds, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->lower_bounds, value_ptr);
+        ptr->has_lower_bounds = 1;
+    }
+
+    if( strncmp("upper", id, 5) == 0 ) { 
+        if( !ptr->has_upper_bounds ) {
+            fnt_vect_calloc(&ptr->upper_bounds, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->upper_bounds, value_ptr);
+        ptr->has_upper_bounds = 1;
+    }
+
+    if( (ptr->has_lower_bounds && ptr->has_upper_bounds) ) { 
+        for(int j=0; j<ptr->lower_bounds.n; ++j) {
+            double lower = ptr->lower_bounds.v[j];
+            double upper = ptr->upper_bounds.v[j];
+            if( upper < lower ) {
+                if( fnt_verbose_level >= FNT_ERROR ) {
+                    fprintf(stderr, "ERROR: Upper and lower bounds for dimension %i are out of order (lower=%g, upper=%g), swapping them.\n", j, lower, upper);
+                }
+                ptr->lower_bounds.v[j] = upper;
+                ptr->upper_bounds.v[j] = lower;
+            }
+        }
+    }
+
     if( ptr->NP < 3 ) {
         if( fnt_verbose_level >= FNT_ERROR ) {
             fprintf(stderr, "ERROR: NP must be at least 3.\n");
@@ -226,6 +314,31 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("F", id, double, ptr->F, value_ptr);
     FNT_HPARAM_GET("lambda", id, double, ptr->lambda, value_ptr);
     FNT_HPARAM_GET("NP", id, int, ptr->NP, value_ptr);
+
+    if( strncmp("start", id, 5) == 0 ) { 
+        if( ptr->has_start_point ) {
+            fnt_vect_copy(value_ptr, &ptr->start_point);
+        } else if( fnt_verbose_level >= FNT_ERROR ) {
+            fprintf(stderr, "Start point requested, but not set.\n");
+            return FNT_FAILURE;
+        }
+    }
+    if( strncmp("lower", id, 5) == 0 ) { 
+        if( ptr->has_lower_bounds ) {
+            fnt_vect_copy(value_ptr, &ptr->lower_bounds);
+        } else if( fnt_verbose_level >= FNT_ERROR ) {
+            fprintf(stderr, "Lower bound requested, but not set.\n");
+            return FNT_FAILURE;
+        }
+    }
+    if( strncmp("upper", id, 5) == 0 ) { 
+        if( ptr->has_upper_bounds ) {
+            fnt_vect_copy(value_ptr, &ptr->upper_bounds);
+        } else if( fnt_verbose_level >= FNT_ERROR ) {
+            fprintf(stderr, "Upper bound requested, but not set.\n");
+            return FNT_FAILURE;
+        }
+    }
 
     return FNT_SUCCESS;
 }
@@ -285,7 +398,24 @@ int method_next(void *handle, fnt_vect_t *vec) {
     }
 
     /* apply crossover */
-    
+    /* TODO: Add crossover */
+
+    /* apply lower and upper bounds */
+    if( ptr->has_lower_bounds ) {
+        for(int j=0; j<ptr->v.n; ++j) {
+            if( ptr->v.v[j] < ptr->lower_bounds.v[j] ) {
+                ptr->v.v[j] = ptr->lower_bounds.v[j];
+            }
+        }
+    }
+    if( ptr->has_upper_bounds ) {
+        for(int j=0; j<ptr->v.n; ++j) {
+            if( ptr->v.v[j] > ptr->upper_bounds.v[j] ) {
+                ptr->v.v[j] = ptr->upper_bounds.v[j];
+            }
+        }
+    }
+
     return fnt_vect_copy(vec, &ptr->v);
 }
 

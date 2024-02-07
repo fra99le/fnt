@@ -45,6 +45,28 @@ int main() {
     fnt_hparam_set(fnt, "f_tol", &tolerance);
     fnt_hparam_set(fnt, "NP", &NP);
 
+    #if 0
+    /* enable this code to set an initial guess */
+    fnt_vect_t start;
+    fnt_vect_calloc(&start, 2);
+    start.v[0] = 2.0;
+    start.v[1] = 2.0;
+    fnt_hparam_set(fnt, "start", &start);
+    #endif /* 1 */
+
+    #if 0
+    /* enable this code to set upper and lower bounds for search */
+    fnt_vect_t lower, upper;
+    fnt_vect_calloc(&lower, 2);
+    fnt_vect_calloc(&upper, 2);
+    lower.v[0] = -10;
+    lower.v[1] = -10;
+    upper.v[0] = 10;
+    upper.v[1] = 10;
+    fnt_hparam_set(fnt, "lower", &lower);
+    fnt_hparam_set(fnt, "upper", &upper);
+    #endif /* 1 */
+
     /* read and report default hyper-parameters */
     double F, lambda;
     fnt_hparam_get(fnt, "f_tol", &tolerance);
