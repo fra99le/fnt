@@ -366,13 +366,12 @@ int method_next(void *handle, fnt_vect_t *vec) {
         return FNT_FAILURE;
     }
 
-    /* pick r1, r2, r3 unique */
-    int r1, r2, r3;
-    r1 = rand() % ptr->NP;
-    r2 = rand() % ptr->NP;
-    r3 = rand() % ptr->NP;
-    while( r1 == r2 )               { r2 = rand() % ptr->NP; }
-    while( r1 == r3 || r2 == r3 )   { r3 = rand() % ptr->NP; }
+    /* pick unique r1, r2, r3 vectors */
+    int r1 = FNT_RAND() % ptr->NP;
+    int r2 = FNT_RAND() % ptr->NP;
+    int r3 = FNT_RAND() % ptr->NP;
+    while( r1 == r2 )               { r2 = FNT_RAND() % ptr->NP; }
+    while( r1 == r3 || r2 == r3 )   { r3 = FNT_RAND() % ptr->NP; }
     if( fnt_verbose_level >= FNT_DEBUG ) {
         printf("r1, r2, r3 = %d, %d, %d\n", r1, r2, r3);
     }
