@@ -18,6 +18,18 @@
 #define FNT_INFO    3
 #define FNT_DEBUG   4
 
+
+/* MARK: Random number generation macros */
+
+#ifndef FNT_RAND
+#define FNT_RAND        rand
+#endif /* FNT_RAND */
+#ifndef FNT_RAND_MAX
+#define FNT_RAND_MAX    RAND_MAX
+#endif /* FNT_RAND_MAX */
+
+/* MARK: Hyper-parameter accessing macros */
+
 #define FNT_HPARAM_SET(name, id, type, src_ptr, dst) \
     if( strncmp((name), (id), strlen(name)) == 0 ) { \
         (dst) = *(type*)(src_ptr); \
