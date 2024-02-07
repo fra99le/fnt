@@ -352,7 +352,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
     int curr = ptr->current;
 
-    /* fill initial generation on first call */
+    /* fill initial generation during initialization phase */
     if( ptr->state == de_initial ) {
         de_fill_first_gen(ptr);
         return fnt_vect_copy(vec, &ptr->v);
