@@ -47,7 +47,7 @@ typedef struct de {
 /* MARK: Internal functions */
 
 static int de_print_generation(de_t *ptr) {
-    
+
     printf("Current generation:\n");
     for(int i=0; i<ptr->NP; ++i) {
         printf("%5d: ", i);
@@ -67,6 +67,7 @@ static int de_print_generation(de_t *ptr) {
 
 
 static int de_allocate_generations(de_t *ptr) {
+
     /* TODO: Check for calloc failures */
     ptr->x = calloc(ptr->NP, sizeof(fnt_vect_t));
     ptr->x_prev = calloc(ptr->NP, sizeof(fnt_vect_t));
@@ -86,6 +87,7 @@ static int de_allocate_generations(de_t *ptr) {
 
 
 static int de_free_generations(de_t *ptr) {
+
     for(int i=0; i<ptr->NP; ++i) {
         fnt_vect_free(&ptr->x[i]);
         fnt_vect_free(&ptr->x_prev[i]);
@@ -248,7 +250,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
     FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
 
-    if( strncmp("start", id, 5) == 0 ) { 
+    if( strncmp("start", id, 5) == 0 ) {
         if( !ptr->has_start_point ) {
             fnt_vect_calloc(&ptr->start_point, ptr->dim);
         }
@@ -256,7 +258,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
         ptr->has_start_point = 1;
     }
 
-    if( strncmp("lower", id, 5) == 0 ) { 
+    if( strncmp("lower", id, 5) == 0 ) {
         if( !ptr->has_lower_bounds ) {
             fnt_vect_calloc(&ptr->lower_bounds, ptr->dim);
         }
@@ -264,7 +266,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
         ptr->has_lower_bounds = 1;
     }
 
-    if( strncmp("upper", id, 5) == 0 ) { 
+    if( strncmp("upper", id, 5) == 0 ) {
         if( !ptr->has_upper_bounds ) {
             fnt_vect_calloc(&ptr->upper_bounds, ptr->dim);
         }
@@ -272,7 +274,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
         ptr->has_upper_bounds = 1;
     }
 
-    if( (ptr->has_lower_bounds && ptr->has_upper_bounds) ) { 
+    if( (ptr->has_lower_bounds && ptr->has_upper_bounds) ) {
         for(int j=0; j<ptr->lower_bounds.n; ++j) {
             double lower = ptr->lower_bounds.v[j];
             double upper = ptr->upper_bounds.v[j];
@@ -301,7 +303,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
         /* allocate new generation tracking */
         de_allocate_generations(ptr);
     }
-        
+
     return FNT_SUCCESS;
 }
 
@@ -315,7 +317,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("lambda", id, double, ptr->lambda, value_ptr);
     FNT_HPARAM_GET("NP", id, int, ptr->NP, value_ptr);
 
-    if( strncmp("start", id, 5) == 0 ) { 
+    if( strncmp("start", id, 5) == 0 ) {
         if( ptr->has_start_point ) {
             fnt_vect_copy(value_ptr, &ptr->start_point);
         } else if( fnt_verbose_level >= FNT_ERROR ) {
@@ -323,7 +325,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
             return FNT_FAILURE;
         }
     }
-    if( strncmp("lower", id, 5) == 0 ) { 
+    if( strncmp("lower", id, 5) == 0 ) {
         if( ptr->has_lower_bounds ) {
             fnt_vect_copy(value_ptr, &ptr->lower_bounds);
         } else if( fnt_verbose_level >= FNT_ERROR ) {
@@ -331,7 +333,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
             return FNT_FAILURE;
         }
     }
-    if( strncmp("upper", id, 5) == 0 ) { 
+    if( strncmp("upper", id, 5) == 0 ) {
         if( ptr->has_upper_bounds ) {
             fnt_vect_copy(value_ptr, &ptr->upper_bounds);
         } else if( fnt_verbose_level >= FNT_ERROR ) {
