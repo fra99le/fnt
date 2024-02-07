@@ -8,28 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../fnt.h"
+#include "../fnt_problems.h"
 
 #ifndef FNT_METHODS_DIR
 #define FNT_METHODS_DIR "."
 #endif /* FNT_METHODS_DIR */
 
-/** \brief Computes the L_2 norm of the input vector. */
-double rosenbrock(double x, double y) {
-    /* Rosenbrock function
-     * see: https://en.wikipedia.org/wiki/Rosenbrock_function
-     */
-    const double a = 1, b =100;   /* minumum should be at (x,y) = (1,1) */
-    
-    double f = pow(a - x, 2.0) + b * pow(y - x*x , 2.0);
-
-    return f;
-}
-
 int main() {
 
     void *fnt = NULL;
 
-    fnt_verbose(FNT_DEBUG); /* request informative output */
+    fnt_verbose(FNT_INFO); /* request informative output */
     fnt_init(&fnt, FNT_METHODS_DIR "/methods");
 
     /* load nelder-mead to minimize Rosenbrock function */
