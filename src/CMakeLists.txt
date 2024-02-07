@@ -44,6 +44,7 @@ target_link_libraries(libfnt m)
 add_custom_target(full-clean
                   COMMAND bash -c 'rm -frv CMakeCache.txt CMakeFiles Makefile; rm -fvf CMake*.log'
                   )
+
 add_custom_target(fix-cmake
                   DEPENDS full-clean
                   )
@@ -51,5 +52,11 @@ add_custom_target(fix-cmake
 # add a debug build target
 add_custom_target(debug-build
                   COMMAND bash -c 'cmake -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_C_FLAGS_DEBUG="-O0" . && CFLAGS=-Wall VERBOSE=1 make'
+                  )
+
+# add a valgrind testing target
+add_custom_target(valgrind
+                  COMMAND valgrind --leak-check=full --show-reachable=yes --vgdb-error=0 -v ./tests/nelder-mead_test
+                  DEPENDS debug-build
                   )
 
