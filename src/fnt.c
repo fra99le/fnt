@@ -54,8 +54,12 @@ typedef struct fnt_method {
     int (*done)(void *handle);
     int (*result)(void *handle, void*);
     fnt_vect_t best_x;
-    double best_fx;
-    int has_best;
+    double fx_min;
+    fnt_vect_t x_min;
+    int has_min;
+    double fx_root;
+    fnt_vect_t x_root;
+    int has_root;
 } fnt_method_t;
 
 
@@ -378,10 +382,12 @@ int fnt_set_method(void *context, char *name, int dimensions) {
                 continue;   /* keep looking for one that might work */
             }
 
-            /* initialize tracking of best input */
+            /* initialize tracking of best inputs (root and minimum) */
             fnt_vect_calloc(&ctx->method.best_x, dimensions);
-            ctx->method.best_fx = 0.0;
-            ctx->method.has_best = 0;
+            ctx->method.fx_min = 0.0;
+            ctx->method.has_min = 0;
+            ctx->method.fx_root = 0.0;
+            ctx->method.has_root = 0;
 
             return ret;
         }
@@ -410,10 +416,14 @@ int fnt_free(void **context) {
         }
     }
 
+    /* free input vectors for best results */
+    if( ctx->method.has_min )   { fnt_vect_free(&ctx->method.x_min);  }
+    if( ctx->method.has_root )  { fnt_vect_free(&ctx->method.x_root); }
+
     fnt_method_list_free(&ctx->methods_list);
     dlclose(ctx->dl_handle);    ctx->dl_handle = NULL;
 
-    /* TODO: empty eny queued values */
+    /* TODO: empty any queued values */
 
     if( ret == FNT_SUCCESS ) {
         free(*context); *context = ctx = NULL;
@@ -526,18 +536,42 @@ int fnt_next(void *context, fnt_vect_t *vec) {
 }
 
 
+static int fnt_record_best(context_t *ctx, fnt_vect_t *vec, double value) {
+
+    /* record minimum value and input */
+    if( value < ctx->method.fx_min || ctx->method.has_min == 0 ) {
+        if( !ctx->method.has_min ) {
+            fnt_vect_calloc(&ctx->method.x_min, vec->n);
+        }
+        ctx->method.fx_min = value;
+        fnt_vect_copy(&ctx->method.x_min, vec);
+        ctx->method.has_min = 1;
+    }
+
+    /* record value and input closest to zero */
+    if( fabs(value) < fabs(ctx->method.fx_root) || ctx->method.has_root == 0 ) {
+        if( !ctx->method.has_root ) {
+            fnt_vect_calloc(&ctx->method.x_root, vec->n);
+        }
+        ctx->method.fx_root = value;
+        fnt_vect_copy(&ctx->method.x_root, vec);
+        ctx->method.has_root = 1;
+    }
+
+    return FNT_SUCCESS;
+}
+
+
 int fnt_set_value(void *context, fnt_vect_t *vec, double value) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
     if( ctx->method.value == NULL ) { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
+    if( vec->v == NULL )            { return FNT_FAILURE; }
 
     int ret = ctx->method.value(ctx->method.handle, vec, value);
-    if( value < ctx->method.best_fx || ctx->method.has_best == 0 ) {
-        fnt_vect_copy(&ctx->method.best_x, vec);
-        ctx->method.best_fx = value;
-        ctx->method.has_best = 1;
-    }
+
+    fnt_record_best(ctx, vec, value);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
         printf("DEBUG: Set value of objective function");
@@ -559,11 +593,8 @@ int fnt_set_value_gradient(void *context, fnt_vect_t *vec, double value, fnt_vec
     if( gradient == NULL )          { return FNT_FAILURE; }
 
     int ret = ctx->method.value_gradient(ctx->method.handle, vec, value, gradient);
-    if( value < ctx->method.best_fx || ctx->method.has_best == 0 ) {
-        fnt_vect_copy(&ctx->method.best_x, vec);
-        ctx->method.best_fx = value;
-        ctx->method.has_best = 1;
-    }
+
+    fnt_record_best(ctx, vec, value);
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
         printf("DEBUG: Set value of objective function");
@@ -594,22 +625,48 @@ int fnt_done(void *context) {
 }
 
 
-int fnt_best(void *context, fnt_vect_t *vec) {
+int fnt_minimum(void *context, fnt_vect_t *vec, double *value) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
-    if( ctx->method.next == NULL )  { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
+    if( vec->v == NULL )            { return FNT_FAILURE; }
 
     int ret = FNT_FAILURE;
-    if( ctx->method.has_best ) {
-        ret = fnt_vect_copy(vec, &ctx->method.best_x);
+    if( ctx->method.has_min ) {
+        if( value != NULL ) {
+            *value = ctx->method.fx_min;
+        }
+        ret = fnt_vect_copy(vec, &ctx->method.x_min);
     }
 
     if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
-        printf("DEBUG: Retrieved best input vector:");
-        fnt_vect_println(vec, "DEBUG: Retrieved best input vector: ", NULL);
+        fnt_vect_println(vec, "DEBUG: Retrieved input vectorfor minimum: ", NULL);
     } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
-        fprintf(stderr, "ERROR: Failed to retrieve best input vector.\n");
+        fprintf(stderr, "ERROR: Failed to retrieve input vector for minimum.\n");
+    }
+
+    return ret;
+}
+
+
+int fnt_root(void *context, fnt_vect_t *vec, double *value) {
+    context_t *ctx = (context_t*)context;
+    if( ctx == NULL )               { return FNT_FAILURE; }
+    if( vec == NULL )               { return FNT_FAILURE; }
+    if( vec->v == NULL )            { return FNT_FAILURE; }
+
+    int ret = FNT_FAILURE;
+    if( ctx->method.has_root ) {
+        if( value != NULL ) {
+            *value = ctx->method.fx_root;
+        }
+        ret = fnt_vect_copy(vec, &ctx->method.x_root);
+    }
+
+    if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
+        fnt_vect_println(vec, "DEBUG: Retrieved input vector for root: ", NULL);
+    } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
+        fprintf(stderr, "ERROR: Failed to retrieve input vector for minimum.\n");
     }
 
     return ret;
@@ -630,7 +687,7 @@ int fnt_result(void *context, void *extra) {
     int ret = ctx->method.result(ctx->method.handle, extra);
 
     if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
-        fprintf(stderr, "ERROR: Method completion check failed.\n");
+        fprintf(stderr, "ERROR: Method result reporting failed.\n");
     }
 
     return ret;

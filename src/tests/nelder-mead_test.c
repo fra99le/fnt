@@ -65,7 +65,7 @@ int main() {
     }
 
     /* Get best result. */
-    if( fnt_best(fnt, &x) == FNT_SUCCESS )
+    if( fnt_minimum(fnt, &x, NULL) == FNT_SUCCESS )
         fnt_vect_println(&x, "Best result: ", "%.3f");
 
     /* Get/report any results beyond best input vector. */
