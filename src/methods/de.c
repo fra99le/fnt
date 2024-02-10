@@ -9,7 +9,7 @@
 #include <string.h>
 #include "../fnt.h"
 
-/* MARK: Method type defitinions */
+/* MARK: Method type definitions */
 
 typedef enum de_state {
     de_initial, de_running, de_done
