@@ -50,6 +50,7 @@ typedef struct fnt_method {
     int (*seed)(void *handle, fnt_vect_t *vec);
     int (*next)(void *handle, fnt_vect_t *vec);
     int (*value)(void *handle, fnt_vect_t *vec, double value);
+    int (*value_gradient)(void *handle, fnt_vect_t *vec, double value, fnt_vect_t *gradient);
     int (*done)(void *handle);
     int (*result)(void *handle, void*);
     fnt_vect_t best_x;
@@ -287,6 +288,7 @@ int fnt_method_load(context_t *ctx, char *filename) {
     ctx->method.seed = dlsym(dl_handle, "method_seed");
     ctx->method.next = dlsym(dl_handle, "method_next");
     ctx->method.value = dlsym(dl_handle, "method_value");
+    ctx->method.value_gradient = dlsym(dl_handle, "method_value_gradient");
     ctx->method.done = dlsym(dl_handle, "method_done");
     ctx->method.result = dlsym(dl_handle, "method_result");
 
@@ -531,6 +533,32 @@ int fnt_set_value(void *context, fnt_vect_t *vec, double value) {
     if( vec == NULL )               { return FNT_FAILURE; }
 
     int ret = ctx->method.value(ctx->method.handle, vec, value);
+    if( value < ctx->method.best_fx || ctx->method.has_best == 0 ) {
+        fnt_vect_copy(&ctx->method.best_x, vec);
+        ctx->method.best_fx = value;
+        ctx->method.has_best = 1;
+    }
+
+    if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_DEBUG ) {
+        printf("DEBUG: Set value of objective function");
+        fnt_vect_print(vec, " for input ", "%.2f");
+        printf(" to %g.\n", value);
+    } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
+        fprintf(stderr, "ERROR: Failed to set objective value for input vector.\n");
+    }
+
+    return ret;
+}
+
+
+int fnt_set_value_gradient(void *context, fnt_vect_t *vec, double value, fnt_vect_t *gradient) {
+    context_t *ctx = (context_t*)context;
+    if( ctx == NULL )               { return FNT_FAILURE; }
+    if( ctx->method.value == NULL ) { return FNT_FAILURE; }
+    if( vec == NULL )               { return FNT_FAILURE; }
+    if( gradient == NULL )          { return FNT_FAILURE; }
+
+    int ret = ctx->method.value_gradient(ctx->method.handle, vec, value, gradient);
     if( value < ctx->method.best_fx || ctx->method.has_best == 0 ) {
         fnt_vect_copy(&ctx->method.best_x, vec);
         ctx->method.best_fx = value;

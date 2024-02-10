@@ -83,6 +83,15 @@ int fnt_next(void *context, fnt_vect_t *vec);
  */
 int fnt_set_value(void *context, fnt_vect_t *vec, double value);
 
+/** \brief Provide the value and gradient of the objective function for input vector.
+ * \param context FNT context for method.
+ * \param vec Pointer to the input vector (i.e. v).
+ * \param value Value of objective function (i.e., f(v)).
+ * \param gradient Vector of partial derivatives with respect to x.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int fnt_set_value_gradient(void *context, fnt_vect_t *vec, double value, fnt_vect_t *gradient);
+
 /** \brief Check if method had completed.
  * \param context FNT context to be checked.
  * \return FNT_DONE when complete, zero otherwise.
