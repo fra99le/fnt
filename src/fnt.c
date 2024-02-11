@@ -410,7 +410,7 @@ int fnt_free(void **context) {
         ret = ctx->method.free(&ctx->method.handle);
 
         if( ret == FNT_SUCCESS && fnt_verbose_level >= FNT_INFO ) {
-            printf("Freed intenally allocated values for method '%s'.\n", ctx->method.name);
+            printf("Freed internally allocated values for method '%s'.\n", ctx->method.name);
         } else if( ret == FNT_FAILURE && fnt_verbose_level >= FNT_ERROR ) {
             fprintf(stderr, "ERROR: Call to free for method '%s' failed..\n", ctx->method.name);
         }
