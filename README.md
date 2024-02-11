@@ -2,7 +2,7 @@
 Numerical Toolbox
 
 ## Background
-Many numberical method libraries require the caller to pass the objective
+Many numerical method libraries require the caller to pass the objective
 function as a parameter and the library will call the objective function as it
 sees fit.  In many cases the additional overhead needed to allow such
 libraries to make the call can be quite cumbersome.
