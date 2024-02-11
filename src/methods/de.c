@@ -502,5 +502,8 @@ int method_done(void *handle) {
 
 
 int method_result(void *handle, void *extra) {
+
+    /* This method does not produce additional results. */
+
     return FNT_FAILURE;
 }

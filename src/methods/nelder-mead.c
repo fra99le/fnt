@@ -621,3 +621,10 @@ int method_done(void *nm_ptr) {
 
     return FNT_CONTINUE;
 }
+
+int method_result(void *handle, void *extra) {
+
+    /* This method does not produce additional results. */
+
+    return FNT_FAILURE;
+}

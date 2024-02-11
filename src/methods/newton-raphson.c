@@ -184,7 +184,7 @@ int method_done(void *handle) {
 
 int method_result(void *handle, void *extra) {
 
-    /* Optional method to report any additional results if the method does
+    /* Optional method to report any additional results if the method
      * produces such results.
      */
 
