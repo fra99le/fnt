@@ -159,10 +159,10 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
         /* ensure that f(a) < f(b) */
         if( ptr->f_b < ptr->f_a ) {
+            /* swap a & b if order of f(a) & f(b) are awkward. */
             double tmp;
-            tmp = ptr->a;       ptr->b = ptr->a;        ptr->a = tmp;
-
-            tmp = ptr->f_a;     ptr->f_b = ptr->f_a;    ptr->f_a = tmp;
+            tmp = ptr->b;       ptr->b = ptr->a;        ptr->a = tmp;
+            tmp = ptr->f_b;     ptr->f_b = ptr->f_a;    ptr->f_a = tmp;
         }
 
         /* check that endpoints meet bisection precondition, f(a)*f(b) < 0 */
@@ -227,18 +227,21 @@ int method_done(void *handle) {
     /* test for completion
      *  Return FNT_DONE when comlete, or FNT_CONTINUE when not done.
      */
+    if( ptr->state == initial || ptr->state == initial2 ) {
+        return FNT_CONTINUE;
+    }
     if( ptr->state == done ) {
         return FNT_DONE;
     }
 
-    if( ptr->b - ptr->a  < ptr->x_tol ) {
+    if( fabs(ptr->b - ptr->a) < ptr->x_tol ) {
         if( fnt_verbose_level >= FNT_INFO ) {
             printf("Upper and lower bound within termination threshold.\n");
         }
         ptr->state = done;
         return FNT_DONE;
     }
-    if( ptr->f_b - ptr->f_a  < ptr->f_tol ) {
+    if( fabs(ptr->f_b - ptr->f_a) < ptr->f_tol ) {
         if( fnt_verbose_level >= FNT_INFO ) {
             printf("Difference in function's value at upper and lower bound within termination threshold.\n");
         }
@@ -247,16 +250,4 @@ int method_done(void *handle) {
     }
 
     return FNT_CONTINUE;
-}
-
-
-int method_result(void *handle, void *extra) {
-    if( handle == NULL )    { return FNT_FAILURE; }
-    bisection_t *ptr = (bisection_t*)handle;
-
-    /* Optional method to report any additional results if the method
-     * produces such results.
-     */
-
-    return FNT_FAILURE;
 }
