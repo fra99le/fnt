@@ -26,7 +26,7 @@ int main() {
     fnt_verbose(FNT_DEBUG); /* request informative output */
     fnt_init(&fnt, FNT_METHODS_DIR "/methods");
 
-    /* load nelder-mead to minimize Rosenbrock function */
+    /* load secant method to find root of polynomial function */
     if( fnt_set_method(fnt, "secant", 1) == FNT_FAILURE ) {
         return 1;
     }

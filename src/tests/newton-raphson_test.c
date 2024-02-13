@@ -29,7 +29,7 @@ int main() {
     fnt_verbose(FNT_INFO); /* request informative output */
     fnt_init(&fnt, FNT_METHODS_DIR "/methods");
 
-    /* load nelder-mead to minimize Rosenbrock function */
+    /* load newton-raphsom to find the root of the polynomial function */
     if( fnt_set_method(fnt, "newton-raphson", 1) == FNT_FAILURE ) {
         return 1;
     }
