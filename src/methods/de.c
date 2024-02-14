@@ -108,9 +108,9 @@ static int de_fill_first_gen(de_t *ptr) {
     /* if an initial value is give, fill based on it. */
     if( ptr->has_start_point ) {
         if( fnt_verbose_level >= FNT_DEBUG ) {
-            printf("Filling initial generation using ");
+            DEBUG("Filling initial generation using ");
             fnt_vect_print(&ptr->start_point, "start point: ", NULL);
-            printf(".\n");
+            DEBUG(".\n");
         }
 
         /* pick a point normally distributed around start point */
@@ -131,9 +131,7 @@ static int de_fill_first_gen(de_t *ptr) {
             }
         }
     } else {
-        if( fnt_verbose_level >= FNT_DEBUG ) {
-            printf("Filling initial generation uniformly randomly (curr=%d).\n", curr);
-        }
+        DEBUG("Filling initial generation uniformly randomly (curr=%d).\n", curr);
 
         /* pick uniformly random point, applying bounds as supplied. */
         for(int j=0; j<ptr->dim; ++j) {
@@ -279,9 +277,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
             double lower = ptr->lower_bounds.v[j];
             double upper = ptr->upper_bounds.v[j];
             if( upper < lower ) {
-                if( fnt_verbose_level >= FNT_ERROR ) {
-                    fprintf(stderr, "ERROR: Upper and lower bounds for dimension %i are out of order (lower=%g, upper=%g), swapping them.\n", j, lower, upper);
-                }
+                WARN("WARNING: Upper and lower bounds for dimension %i are out of order (lower=%g, upper=%g), swapping them.\n", j, lower, upper);
                 ptr->lower_bounds.v[j] = upper;
                 ptr->upper_bounds.v[j] = lower;
             }
@@ -289,9 +285,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     }
 
     if( ptr->NP < 3 ) {
-        if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "ERROR: NP must be at least 3.\n");
-        }
+        ERROR("ERROR: NP must be at least 3, NP was %d, changing it to 3.\n", ptr->NP);
         ptr->NP = 3;
     }
 
@@ -320,24 +314,24 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( strncmp("start", id, 5) == 0 ) {
         if( ptr->has_start_point ) {
             fnt_vect_copy(value_ptr, &ptr->start_point);
-        } else if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Start point requested, but not set.\n");
+        } else {
+            ERROR("Start point requested, but not set.\n");
             return FNT_FAILURE;
         }
     }
     if( strncmp("lower", id, 5) == 0 ) {
         if( ptr->has_lower_bounds ) {
             fnt_vect_copy(value_ptr, &ptr->lower_bounds);
-        } else if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Lower bound requested, but not set.\n");
+        } else {
+            ERROR("Lower bound requested, but not set.\n");
             return FNT_FAILURE;
         }
     }
     if( strncmp("upper", id, 5) == 0 ) {
         if( ptr->has_upper_bounds ) {
             fnt_vect_copy(value_ptr, &ptr->upper_bounds);
-        } else if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Upper bound requested, but not set.\n");
+        } else {
+            ERROR("Upper bound requested, but not set.\n");
             return FNT_FAILURE;
         }
     }
@@ -359,9 +353,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
     }
 
     if( ptr->state != de_running ) {
-        if( fnt_verbose_level >= FNT_WARN ) {
-            fprintf(stderr, "%s called while in the wrong state.\n", __FUNCTION__);
-        }
+        WARN("%s called while in the wrong state.\n", __FUNCTION__);
 
         return FNT_FAILURE;
     }
@@ -372,9 +364,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
     int r3 = FNT_RAND() % ptr->NP;
     while( r1 == r2 )               { r2 = FNT_RAND() % ptr->NP; }
     while( r1 == r3 || r2 == r3 )   { r3 = FNT_RAND() % ptr->NP; }
-    if( fnt_verbose_level >= FNT_DEBUG ) {
-        printf("r1, r2, r3 = %d, %d, %d\n", r1, r2, r3);
-    }
+    DEBUG("DEBUG: r1, r2, r3 = %d, %d, %d\n", r1, r2, r3);
 
     /* compute trial vector v */
     fnt_vect_t diff;    /* Note: these could reside in de_t */
@@ -441,9 +431,9 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     /* compare against current best value */
     if( value < ptr->fx[ptr->best] ) {
         if( fnt_verbose_level >= FNT_INFO ) {
-            printf("New best value %g ", value);
+            INFO("New best value %g ", value);
             fnt_vect_print(vec, "for input ", NULL);
-            printf(" at position %d.\n", curr);
+            INFO(" at position %d.\n", curr);
         }
         /* update best */
         ptr->best = curr;
@@ -457,24 +447,20 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
         /* leave initial state once first generation is complete */
         if( ptr->state == de_initial ) {
-            if( fnt_verbose_level >= FNT_DEBUG ) {
-                printf("Finished initial generation of size %d.\n", ptr->NP);
-            }
+            DEBUG("Finished initial generation of size %d.\n", ptr->NP);
             ptr->state = de_running;
         }
 
         /* finished current generation, swap */
         void *tmp;
-        if( fnt_verbose_level >= FNT_DEBUG ) {
-            printf("DEBUG: Swapping generations.\n");
-        }
+        DEBUG("DEBUG: Swapping generations.\n");
         tmp = ptr->x;   ptr->x = ptr->x_prev;       ptr->x_prev = tmp;
         tmp = ptr->fx;  ptr->fx = ptr->fx_prev;     ptr->fx_prev = tmp;
 
         ptr->current = 0;
 
         if( fnt_verbose_level >= FNT_DEBUG ) {
-            printf("After swap:\n");
+            DEBUG("After swap:\n");
             de_print_generation(ptr);
         }
     }

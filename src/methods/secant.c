@@ -58,9 +58,7 @@ int method_init(void **handle_ptr, int dimensions) {
     *handle_ptr = (void*)ptr;
 
     if( dimensions > 1 ) {
-        if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Newton-Raphson is a single variate method.\n");
-        }
+        ERROR("Newton-Raphson is a single variate method.\n");
         return FNT_FAILURE;
     }
 

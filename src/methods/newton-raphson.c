@@ -54,9 +54,7 @@ int method_init(void **handle_ptr, int dimensions) {
     *handle_ptr = (void*)ptr;
 
     if( dimensions > 1 ) {
-        if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Newton-Raphson is a single variate method.\n");
-        }
+        ERROR("Newton-Raphson is a single variate method.\n");
         return FNT_FAILURE;
     }
 
@@ -135,9 +133,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
 int method_value(void *handle, fnt_vect_t *vec, double value) {
 
     /* update method using value */
-    if( fnt_verbose_level >= FNT_ERROR ) {
-        fprintf(stderr, "ERROR: Newton-Raphsom method requires dervative.\n");
-    }
+    ERROR("ERROR: Newton-Raphsom method requires dervative.\n");
 
     return FNT_FAILURE;
 }
