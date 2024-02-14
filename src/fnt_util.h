@@ -7,6 +7,8 @@
 #ifndef FNT_UTIL_H
 #define FNT_UTIL_H
 
+/* MARK: Constants */
+
 #define FNT_SUCCESS     0
 #define FNT_FAILURE     1
 #define FNT_CONTINUE    2
@@ -27,6 +29,13 @@
 #ifndef FNT_RAND_MAX
 #define FNT_RAND_MAX    RAND_MAX
 #endif /* FNT_RAND_MAX */
+
+/* MARK: Console output macros */
+
+#define ERROR(...)  if( fnt_verbose_level >= FNT_ERROR ) { fprintf(stderr, __VA_ARGS__); }
+#define WARN(...)   if( fnt_verbose_level >= FNT_WARN ) { fprintf(stderr, __VA_ARGS__); }
+#define INFO(...)   if( fnt_verbose_level >= FNT_INFO ) { printf(__VA_ARGS__); }
+#define DEBUG(...)  if( fnt_verbose_level >= FNT_DEBUG ) { printf(__VA_ARGS__); }
 
 /* MARK: Hyper-parameter accessing macros */
 

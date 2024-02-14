@@ -167,15 +167,11 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
         /* check that endpoints meet bisection precondition, f(a)*f(b) < 0 */
         if( ptr->f_a > 0.0 ) {
-            if( fnt_verbose_level >= FNT_ERROR ) {
-                fprintf(stderr, "Lower bound is not less than zero (f(%g)=%g)\n", ptr->a, ptr->f_a); 
-            }
+            ERROR("Lower bound is not less than zero (f(%g)=%g)\n", ptr->a, ptr->f_a); 
             return FNT_FAILURE;
         }
         if( ptr->f_b < 0.0 ) {
-            if( fnt_verbose_level >= FNT_ERROR ) {
-                fprintf(stderr, "Upper bound is not greater than zero (f(%g)=%g)\n", ptr->b, ptr->f_b); 
-            }
+            ERROR("Upper bound is not greater than zero (f(%g)=%g)\n", ptr->b, ptr->f_b); 
             return FNT_FAILURE;
         }
 
@@ -202,9 +198,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         ptr->f_b = 0.0;
         ptr->state = done;
     } else {
-        if( fnt_verbose_level >= FNT_ERROR ) {
-            fprintf(stderr, "Value (%g) is not comparable to zero.\n", value);
-        }
+        ERROR("Value (%g) is not comparable to zero.\n", value);
         return FNT_FAILURE;
     }
 
@@ -235,16 +229,12 @@ int method_done(void *handle) {
     }
 
     if( fabs(ptr->b - ptr->a) < ptr->x_tol ) {
-        if( fnt_verbose_level >= FNT_INFO ) {
-            printf("Upper and lower bound within termination threshold.\n");
-        }
+        INFO("Upper and lower bound within termination threshold.\n");
         ptr->state = done;
         return FNT_DONE;
     }
     if( fabs(ptr->f_b - ptr->f_a) < ptr->f_tol ) {
-        if( fnt_verbose_level >= FNT_INFO ) {
-            printf("Difference in function's value at upper and lower bound within termination threshold.\n");
-        }
+        INFO("Difference in function's value at upper and lower bound within termination threshold.\n");
         ptr->state = done;
         return FNT_DONE;
     }
