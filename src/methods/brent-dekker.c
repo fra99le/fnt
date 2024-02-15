@@ -196,10 +196,10 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
     /* copy common values into local variables */
     double a = ptr->a;
-    double b = ptr->b;
+    double b = vec->v[0];   /* update b */
     double c = ptr->c;
     double f_a = ptr->f_a;
-    double f_b = ptr->f_b;
+    double f_b = value;     /* update f(b) */
     double f_c = ptr->f_c;
     double d = ptr->d;
     double e = ptr->e;
