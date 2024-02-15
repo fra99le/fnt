@@ -231,21 +231,21 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
             double s = f_b / f_a;
             if( a == c ) {
                 /* Linear interpolation */
-                p = 2 * m * s;      q = 1 - s;
+                p = 2.0 * m * s;      q = 1.0 - s;
             } else {
                 double r;
                 /* Inverse quadratic interpolation */
                 q = f_a / f_c;      r = f_b / f_c;
-                p = s * (2 * m * q * (q - r) - (b - a) * (r - 1));
-                q = (q - 1) * (r - 1) * (s - 1);
+                p = s * (2.0 * m * q * (q - r) - (b - a) * (r - 1.0));
+                q = (q - 1.0) * (r - 1.0) * (s - 1.0);
             }
 
             if( p > 0 ) { q = -q; } else { p = -p; }
 
             s = e;      e = d;
 
-            if( 2.0 * p < 3.0 * m * q - fabs(tol * q)
-                && p < fabs(0.5 * s * q) ) {
+            if( (2.0 * p < 3.0 * m * q - fabs(tol * q))
+                && (p < fabs(0.5 * s * q)) ) {
                 d = p / q;
             } else {
                 d = e = m;
