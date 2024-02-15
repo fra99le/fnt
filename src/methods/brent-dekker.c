@@ -204,21 +204,25 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     double d = ptr->d;
     double e = ptr->e;
 
+    /* FORTRAN: 130-ish */
     if( (f_b > 0.0 && f_c > 0.0)
         || (f_b <= 0.0 && f_c <= 0.0)
         || ptr->state == brent_dekker_starting ) {
-        /* int */
+        /* ALGOL: int */
+        /* FORTRAN: 10 */
         c = a;      f_c = f_a;      d = e = b - a;
         if( ptr->state == brent_dekker_starting )
             ptr->state = brent_dekker_running;
     }
 
-    /* ext */
+    /* ALGOL: ext */
+    /* FORTRAN: 20 */
     if( fabs(f_c) < fabs(f_b) ) {
         a = b;      b = c;      c = a;
         f_a = f_b;  f_b = f_c;  f_c = f_a;
     }
 
+    /* FORTRAN: 30 */
     double tol = 2.0 * ptr->macheps * fabs(b) + ptr->t;
     double m = 0.5 * (c - b);
 
@@ -227,12 +231,14 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         if( fabs(e) < tol || fabs(f_a) <= fabs(f_b) ) {
             d = e = m;
         } else {
+            /* FORTRAN: 40 */
             double p, q;
             double s = f_b / f_a;
             if( a == c ) {
                 /* Linear interpolation */
                 p = 2.0 * m * s;      q = 1.0 - s;
             } else {
+                /* FORTRAN: 50 */
                 double r;
                 /* Inverse quadratic interpolation */
                 q = f_a / f_c;      r = f_b / f_c;
@@ -240,23 +246,30 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
                 q = (q - 1.0) * (r - 1.0) * (s - 1.0);
             }
 
+            /* FORTRAN: 60 */           /* FORTRAN: 70 */
             if( p > 0 ) { q = -q; } else { p = -p; }
 
+            /* FORTRAN: 80 */
             s = e;      e = d;
 
             if( (2.0 * p < 3.0 * m * q - fabs(tol * q))
                 && (p < fabs(0.5 * s * q)) ) {
                 d = p / q;
             } else {
+                /* FORTRAN: 90 */
                 d = e = m;
             }
         }
 
+        /* FORTRAN: 100 */
         a = b;      f_a = f_b;
+                                       /* FORTRAN: 110 & 120 */
         b = b + ((fabs(d) > tol) ? d : ((m > 0) ? tol : -tol));
 
         /* need updated f(b) */
+        /* FORTRAN: 130 is external to this function */
     } else {
+        /* FORTRAN: 140 */
         /* method has converged to a solution */
         ptr->state = brent_dekker_done;
         /* b contains the result. */
