@@ -15,6 +15,7 @@
 typedef enum brent_dekker_state {
     brent_dekker_initial,
     brent_dekker_initial2,
+    brent_dekker_starting,
     brent_dekker_running,
     brent_dekker_done
 } brent_dekker_state_t;
@@ -72,6 +73,7 @@ int method_init(void **handle_ptr, int dimensions) {
     }
 
     /* initialize method here */
+    ptr->state = brent_dekker_initial;
     ptr->macheps = 1e-10;
     ptr->t = 1e-6;
 
@@ -106,32 +108,40 @@ int method_info() {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_hparam_set(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    brent_dekker_t *ptr = (brent_dekker_t*)handle;
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    brent_dekker_t *ptr = (brent_dekker_t*)handle;
 
-    FNT_HPARAM_SET("x_0", id, int, value_ptr, ptr->a);
-    FNT_HPARAM_SET("x_1", id, int, value_ptr, ptr->b);
+    FNT_HPARAM_SET("macheps", id, double, value_ptr, ptr->macheps);
+    FNT_HPARAM_SET("t", id, double, value_ptr, ptr->t);
+    FNT_HPARAM_SET("x_0", id, double, value_ptr, ptr->a);
+    FNT_HPARAM_SET("x_1", id, double, value_ptr, ptr->b);
 
-    return FNT_FAILURE;
+    return FNT_SUCCESS;
 }
 
 
 int method_hparam_get(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    brent_dekker_t *ptr = (brent_dekker_t*)handle;
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    brent_dekker_t *ptr = (brent_dekker_t*)handle;
 
-    FNT_HPARAM_GET("x_0", id, int, ptr->a, value_ptr);
-    FNT_HPARAM_GET("x_1", id, int, ptr->b, value_ptr);
+    FNT_HPARAM_GET("macheps", id, double, ptr->macheps, value_ptr);
+    FNT_HPARAM_GET("t", id, double, ptr->t, value_ptr);
+    FNT_HPARAM_GET("x_0", id, double, ptr->a, value_ptr);
+    FNT_HPARAM_GET("x_1", id, double, ptr->b, value_ptr);
 
-    return FNT_FAILURE;
+    return FNT_SUCCESS;
 }
 
 
 int method_next(void *handle, fnt_vect_t *vec) {
     if( handle == NULL )    { return FNT_FAILURE; }
     brent_dekker_t *ptr = (brent_dekker_t*)handle;
+    if( vec == NULL )       { return FNT_FAILURE; }
+    if( vec->v == NULL )    { return FNT_FAILURE; }
 
     /* fill vector pointed to by vec with next input to try */
     if( ptr->state == brent_dekker_initial ) {
@@ -167,15 +177,19 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
         if( ptr->f_a * ptr->f_b > 0.0 ) {
             ERROR("Objective function must have opposite sign at each end of the search region (f(%g)=%g; f(%g)=%g)\n", ptr->a, ptr->f_a, ptr->b, ptr->f_b);
+            ptr->state = brent_dekker_done;
             return FNT_FAILURE;
+        } else {
+            INFO("f(a) and f(b) have different signs, as required.\n");
         }
 
-        ptr->state = brent_dekker_running;
+        ptr->state = brent_dekker_starting;
     }
 
     /* check state */
-    if( ptr->state != brent_dekker_running ) {
-        ERROR("Should be in running state, but is not.\n");
+    if( ptr->state != brent_dekker_starting
+        && ptr->state != brent_dekker_running ) {
+        ERROR("Should be in starting or running state, but is not.\n");
     }
 
     /* perform Brent-Dekker update to a, b, & c. */
@@ -190,15 +204,13 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     double d = ptr->d;
     double e = ptr->e;
 
-    double p, q, r;
-
-    /* note: I think this needs to happen on the first iteration */
     if( (f_b > 0.0 && f_c > 0.0)
-        || (f_b <= 0.0 && f_c <= 0.0) ) {
+        || (f_b <= 0.0 && f_c <= 0.0)
+        || ptr->state == brent_dekker_starting ) {
         /* int */
-        c = a;
-        f_c = f_a;
-        d = e = b - a;
+        c = a;      f_c = f_a;      d = e = b - a;
+        if( ptr->state == brent_dekker_starting )
+            ptr->state = brent_dekker_running;
     }
 
     /* ext */
@@ -215,24 +227,22 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         if( fabs(e) < tol || fabs(f_a) <= fabs(f_b) ) {
             d = e = m;
         } else {
+            double p, q;
             double s = f_b / f_a;
             if( a == c ) {
                 /* Linear interpolation */
-                p = 2 * m * s;  q = 1 - s;
+                p = 2 * m * s;      q = 1 - s;
             } else {
+                double r;
                 /* Inverse quadratic interpolation */
-                q = f_a / f_c;  r = f_b / f_c;
+                q = f_a / f_c;      r = f_b / f_c;
                 p = s * (2 * m * q * (q - r) - (b - a) * (r - 1));
                 q = (q - 1) * (r - 1) * (s - 1);
             }
 
-            if( p > 0 ) {
-                q = -q;
-            } else {
-                p = -p;
-            }
+            if( p > 0 ) { q = -q; } else { p = -p; }
 
-            s = e; e = d;
+            s = e;      e = d;
 
             if( 2.0 * p < 3.0 * m * q - fabs(tol * q)
                 && p < fabs(0.5 * s * q) ) {
@@ -242,12 +252,16 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
             }
         }
 
-        a = b;  f_a = f_b;
+        a = b;      f_a = f_b;
         b = b + ((fabs(d) > tol) ? d : ((m > 0) ? tol : -tol));
 
-        /* need f(b) */
+        /* need updated f(b) */
+    } else {
+        /* method has converged to a solution */
+        ptr->state = brent_dekker_done;
+        /* b contains the result. */
     }
-    
+
     /* copy local variables back to presistent struct */
     ptr->a = a;
     ptr->b = b;
@@ -258,25 +272,22 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     ptr->d = d;
     ptr->e = e;
 
-    return FNT_FAILURE;
+    return FNT_SUCCESS;
 }
 
 
 int method_done(void *handle) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    brent_dekker_t *ptr = (brent_dekker_t*)handle;
 
     /* test for completion
      *  Return FNT_DONE when comlete, or FNT_CONTINUE when not done.
      */
-
-    return FNT_FAILURE;
-}
-
-
-int method_result(void *handle, void *extra) {
-
-    /* Optional method to report any additional results if the method
-     * produces such results.
-     */
+    if( ptr->state == brent_dekker_done ) {
+        return FNT_DONE;
+    } else {
+        return FNT_CONTINUE;
+    }
 
     return FNT_FAILURE;
 }
