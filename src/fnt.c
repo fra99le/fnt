@@ -609,7 +609,7 @@ int fnt_minimum(void *context, fnt_vect_t *vec, double *value) {
 
     if( ret == FNT_SUCCESS ) {
         if( fnt_verbose_level >= FNT_DEBUG ) {
-            fnt_vect_println(vec, "DEBUG: Retrieved input vectorfor minimum: ", NULL);
+            fnt_vect_println(vec, "DEBUG: Retrieved input vector for minimum: ", NULL);
         }
     } else if( ret == FNT_FAILURE ) {
         ERROR("ERROR: Failed to retrieve input vector for minimum.\n");
