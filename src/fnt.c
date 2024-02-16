@@ -550,9 +550,13 @@ int fnt_set_value(void *context, fnt_vect_t *vec, double value) {
 int fnt_set_value_gradient(void *context, fnt_vect_t *vec, double value, fnt_vect_t *gradient) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )               { return FNT_FAILURE; }
-    if( ctx->method.value == NULL ) { return FNT_FAILURE; }
     if( vec == NULL )               { return FNT_FAILURE; }
     if( gradient == NULL )          { return FNT_FAILURE; }
+
+    /* fall back to non-gradient function, if gradient version not supplied. */
+    if( ctx->method.value_gradient == NULL ) {
+        return fnt_set_value(context, vec, value);
+    }
 
     int ret = ctx->method.value_gradient(ctx->method.handle, vec, value, gradient);
 
