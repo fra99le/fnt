@@ -208,13 +208,18 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
         /* Update a, b, v, w, and x */
         if( fu <= fx ) {
+                                        /* FORTRAN: 130 */
             if( u < x ) { b = x; } else { a = x; }
+            /* FORTRAN: 140 */
             v = w;  fv = fw;    w = x;  fw = fx;    x = u;  fx = fu;
         } else {
+            /* FORTRAN: 150 */          /* FORTRAN: 160 */
             if( u < x ) { a = u; } else { b = u; }
+            /* FORTRAN: 170 */
             if( fu <= fw || w == x ) {
                 v = w;  fv = fw;    w = u;  fw = fu;
             } else {
+                /* FORTRAN: 180 */
                 v = u;  fv = fu;
             }
         }
@@ -224,6 +229,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     }
 
     /* ALGOL: loop */
+    /* FORTRAN: 10 */
     double m = 0.5 * (a + b);
     double tol = ptr->eps * fabs(x) + ptr->t;
     double t2 = 2.0 * tol;
@@ -237,26 +243,34 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
             /* Fit parabola */
             r = (x - w) * (fx -fv);     q = (x - v) * (fx - fw);
             p = (x - v) * q - (x - w) * r;      q = 2 * (q - r);
+                                         /* FORTRAN: 20 */
             if( q > 0 ) { p = -p; } else { q = -q; }
+            /* FORTRAN: 30 */
             r = e;      e = d;
         }
+        /* FORTRAN: 40 */
         if( fabs(p) < fabs(0.5 * q * r) && p > q * (a - x) && p < q * (b-x) ) {
             DEBUG("Parabolic interpolation.\n");
             /* A "parabolic interpolation" step */
             d = p / q;      u = x + d;
             /* f must not be evaluated too close to a or b */
+                                                        /* FORTRAN: 50 */
             if( u - a < t2 || b - u < t2 ) { d = (x < m) ? tol : -tol; }
         } else {
             DEBUG("Golden section step.\n");
             /* A "golden section" step */
+            /* FORTRAN: 60 & 70 */          /* FORTRAN: 80 */
             e = ((x < m) ? b : a) - x;      d = c * e;
         }
         /* f must not be evaluated too close to x */
+        /* FORTRAN: 90 100 & 110 */
         u = x + ((fabs(d) >= tol ? d : (d > 0 ? tol : -tol)));
 
         DEBUG("Requesting f(u) = f(%g).\n", u);
         ptr->u = u; /* need f(u) */
+        /* FORTRAN: 120 is external to this function. */
     } else {
+        /* FORTRAN: 190 */
         DEBUG("Setting state to done.\n");
         ptr->state = brent_done;
         /* local minimum should be in fx */
