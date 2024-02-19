@@ -20,7 +20,7 @@ typedef struct de {
     de_state_t state;
 
     /* hyper parameters */
-    double f_tol;
+    int iterations;
     double F;
     double lambda;
     fnt_vect_t start_point;
@@ -186,7 +186,7 @@ int method_init(void **handle_ptr, int dimensions) {
     ptr->state = de_initial;
 
     /* set up method */
-    ptr->f_tol = 1e-6;
+    ptr->iterations = 1000;
     ptr->NP = dimensions * 10;
     ptr->F = 0.5;
     ptr->lambda = 0.1;
@@ -243,7 +243,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 
     int old_NP = ptr->NP;
 
-    FNT_HPARAM_SET("f_tol", id, double, value_ptr, ptr->f_tol);
+    FNT_HPARAM_SET("iterations", id, int, value_ptr, ptr->iterations);
     FNT_HPARAM_SET("F", id, double, value_ptr, ptr->F);
     FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
     FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
@@ -463,6 +463,8 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
             DEBUG("After swap:\n");
             de_print_generation(ptr);
         }
+
+        --ptr->iterations;
     }
 
     return FNT_SUCCESS;
@@ -477,19 +479,10 @@ int method_done(void *handle) {
         return FNT_CONTINUE;
     }
 
-    if( ptr->fx[ptr->best] < ptr->f_tol
-        && ptr->fx_prev[ptr->best] < ptr->f_tol ) {
+    if( ptr->iterations <= 0 ) {
         ptr->state = de_done;
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
-}
-
-
-int method_result(void *handle, void *extra) {
-
-    /* This method does not produce additional results. */
-
-    return FNT_FAILURE;
 }

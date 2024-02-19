@@ -27,10 +27,13 @@ int main() {
         return 1;
     }
 
+    /* display info */
+    fnt_info(fnt);
+
     /* set threshold for completion */
-    double tolerance = 1e-30;
+    int iterations = 1e4;
     int NP = 20;
-    fnt_hparam_set(fnt, "f_tol", &tolerance);
+    fnt_hparam_set(fnt, "iterations", &iterations);
     fnt_hparam_set(fnt, "NP", &NP);
 
     #if 0
@@ -57,11 +60,11 @@ int main() {
 
     /* read and report default hyper-parameters */
     double F, lambda;
-    fnt_hparam_get(fnt, "f_tol", &tolerance);
+    fnt_hparam_get(fnt, "iterations", &iterations);
     fnt_hparam_get(fnt, "F", &F);
     fnt_hparam_get(fnt, "lambda", &lambda);
     fnt_hparam_get(fnt, "NP", &NP);
-    printf("\tf_tol: %g\n\tF: %g\n\tlambda: %g\n\tNP: %d\n", tolerance, F, lambda, NP);
+    printf("\titerations: %g\n\tF: %g\n\tlambda: %g\n\tNP: %d\n", iterations, F, lambda, NP);
 
     /* allocate input for objective function */
     fnt_vect_t x;
