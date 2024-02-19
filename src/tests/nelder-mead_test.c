@@ -26,6 +26,9 @@ int main() {
         return 1;
     }
 
+    /* display info */
+    fnt_info(fnt);
+
     /* set threshold for completion */
     double tolerance = 1e-5;
     fnt_hparam_set(fnt, "tolerence", &tolerance);

@@ -36,6 +36,9 @@ int main() {
         return 1;
     }
 
+    /* display info */
+    fnt_info(fnt);
+
     /* set threshold for completion */
     double tolerance = 1e-30;
     double x_0 = 2;
