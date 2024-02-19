@@ -45,7 +45,7 @@ typedef struct fnt_method {
     void *handle;
     int (*init)(void **handle, int dimensions);
     int (*free)(void **handle);
-    int (*info)(void *handle);
+    int (*info)();
     int (*hparam_set)(void *handle, char *id, void *value_ptr);
     int (*hparam_get)(void *handle, char *id, void *value_ptr);
     int (*seed)(void *handle, fnt_vect_t *vec);
@@ -411,7 +411,7 @@ int fnt_info(void *context) {
         return FNT_FAILURE;
     }
 
-    return ctx->method.info(ctx->method.handle);
+    return ctx->method.info();
 }
 
 
