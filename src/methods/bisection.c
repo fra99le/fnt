@@ -89,10 +89,24 @@ int method_free(void **handle_ptr) {
 }
 
 
+/* \brief Display information about the method to the console.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_info() {
-    printf("\n"
-           "This should give usefiul information about the method.\n"
-           "\n");
+    printf(
+"The bisection method is a root finding technique that works by repeatedly "
+"dividing a search region in half until it converges on the root."
+"\n"
+"Hyper-parameters:\n"
+"name\trequired\ttype\tDefault\tDescription\n"
+"lower\tREQUIRED\tdouble\t-1e6\tLower bound of the region.\n"
+"upper\tREQUIRED\tdouble\t1e6\tUpper bound of the region.\n"
+"f_tol\toptional\tdouble\t1e-6\tTerminates when |f(x)| < f_tol.\n"
+"x_tol\toptional\tdouble\t1e-6\tTerminates when |a-b| < x_tol.\n"
+"\n"
+"References\n"
+"https://en.wikipedia.org/wiki/Bisection_method"
+);
     return FNT_SUCCESS;
 }
 
