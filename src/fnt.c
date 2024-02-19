@@ -648,7 +648,8 @@ int fnt_root(void *context, fnt_vect_t *vec, double *value) {
 int fnt_result(void *context, void *extra) {
     context_t *ctx = (context_t*)context;
     if( ctx == NULL )                   { return FNT_FAILURE; }
-    if( ctx->method.result == NULL )    { return FNT_FAILURE; }
+    /* method is optional, so return success if it is not provided. */
+    if( ctx->method.result == NULL )    { return FNT_SUCCESS; }
     /* extra can be NULL when method doesn't return a result. */
 
     if( fnt_done(context) != FNT_DONE ) {
