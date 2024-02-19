@@ -86,10 +86,25 @@ int method_free(void **handle_ptr) {
 }
 
 
+/* \brief Display information about the method to the console.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_info() {
-    printf("\n"
-           "This should give usefiul information about the method.\n"
-           "\n");
+    printf(
+"Brent's method is a minimization method, that uses a search strategy\n"
+"similar to the Brent-Dekker root finding method.\n"
+"\n"
+"Hyper-parameters:\n"
+"name\trequired\ttype\tDefault\tDescription\n"
+"x_0\tREQUIRED\tdouble\tnone\tLower bound of search region.\n"
+"x_1\tREQUIRED\tdouble\tnone\tUpper bound of search region.\n"
+"eps\toptional\tdouble\t1e-10\tMachine epsilon.\n"
+"t\toptional\tdouble\t1e-6\tMachine epsilon.\n"
+"\n"
+"References:\n"
+"R. P. Brent, Algorithms for Minimization without Derivatives,\n\tPrentice-Hall, Englewood Cliffs, New Jersey, 1973, 195 pp.\n\tISBN 0-13-022335-2.\n"
+"https://maths-people.anu.edu.au/~brent/pub/pub011.html\n"
+);
     return FNT_SUCCESS;
 }
 
