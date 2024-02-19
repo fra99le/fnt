@@ -15,10 +15,12 @@
 #endif /* FNT_METHODS_DIR */
 
 double polynomial(double x) {
+    // 3x^3 - 5x^2 - 6x + 5
     return 3*pow(x, 3.0) - 5*pow(x,2.0) - 6*x + 5;
 }
 
 double derivative(double x) {
+    // 9x^2 - 10x - 6
     return 9*pow(x, 2.0) - 10*x - 6;
 }
 
