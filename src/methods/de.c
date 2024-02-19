@@ -223,10 +223,33 @@ int method_free(void **handle_ptr) {
 }
 
 
+/* \brief Display information about the method to the console.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_info() {
-    printf("\n"
-           "No information for this method, yet.\n"
-           "\n");
+    printf(
+"Differential evolution is a minimization method that uses a population of\n"
+"randomized guesses that are systematically updated with better guesses until\n"
+"a minimum value it found.\n"
+"\n"
+"Note: crossover is not currently implemented.\n"
+"\n"
+"Hyper-parameters:\n"
+"name\trequired\ttype\t\tDefault\tDescription\n"
+"lower\toptional\tfnt_vect_t\tnone\tLower bounds on search region.\n"
+"upper\toptional\tfnt_vect_t\tnone\tUpper bounds on search region.\n"
+"start\toptional\tfnt_vect_t\tnone\tCenter of initial search region.\n"
+"NP\tREQUIRED\tint\t\t10*dims\tNumber of random points.\n"
+"F\toptional\tint\t\t0\tScaling factor applied to difference of vectors.\n"
+"lambda\toptional\tint\t\t0\tScaling factor applied to best vector difference.\n"
+"iterations\toptional\tint\t\t1000\tNumber of iterations to run.\n"
+"\n"
+"References:\n"
+"Storn, R., Price, K. Differential Evolution – A Simple and Efficient\n"
+"\tHeuristic for global Optimization over Continuous Spaces.\n"
+"\tJournal of Global Optimization 11, 341–359 (1997).\n"
+"\thttps://doi.org/10.1023/A:1008202821328\n"
+);
     return FNT_SUCCESS;
 }
 
