@@ -1,9 +1,9 @@
-# fnt
-Numerical Toolbox
+# FNT
+FNT: Numerical Toolbox
 
 ## Background
 Many numerical method libraries (e.g., [Dlib](http://dlib.net)) require the caller to pass the objective
-function as a parameter and the library will call the objective function as it
+function as a parameter and the library will call that objective function as it
 sees fit.  In many cases the additional overhead needed to allow such
 libraries to make the call can be quite cumbersome or require esoteric
 knowledge of the language (e.g., function pointers or closures) to get right.
@@ -27,7 +27,7 @@ $ make
 
 ## Example
 
-To help illustrate how this lbrary differes from other libraries, below is an
+To help illustrate how this library differs from other libraries, below is an
 example.  As with any library of this type there is some initialization and
 teardown that needs to happen, but the actual numerical method (bisection in
 this case) happens in the while loop.
@@ -131,7 +131,7 @@ double polynomial(double x, int n, double *coefficients) {
 ```
 
 If that were the case, then it wouldn't be compatible with a library that
-expects a function that takes only a single double as its parameter, and would
+expects a function that takes only a single `double` as its parameter, and would
 require a wrapper function.
 However, with this library one need only update the call
 to the objective function to use this alternate polynomial function.
@@ -154,3 +154,6 @@ No other changes are required.
 This is of course a contrived example, but in the real world it is often the
 case that objective functions have many more inputs than just the parameters
 being optimized.
+
+[//]: <> (TODO: Add a section on methods available.)
+[//]: <> (TODO: Add information on how to get a list of methods.)
