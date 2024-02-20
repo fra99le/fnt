@@ -61,7 +61,7 @@ int main() {
         if( fnt_next(fnt, &x) != FNT_SUCCESS ) { break; }
 
         /* call objective function */
-        double fx = polynomial(x.v[0]);
+        double fx = polynomial(FNT_VECT_ELEM(x, 0));
 
         fnt_vect_print(&x, "f(", "%g");
         printf(") -> %g\n", fx);

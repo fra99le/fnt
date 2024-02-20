@@ -24,6 +24,11 @@ typedef struct fnt_vect {
 } fnt_vect_t;
 
 
+/* MARK: Accessor macros */
+
+#define FNT_VECT_ELEM(vec, idx)     (vec).v[(idx)]
+
+
 /* MARK: Vector I/O */
 
 static int fnt_vect_print(fnt_vect_t *vec, char *label, char *fmt) {

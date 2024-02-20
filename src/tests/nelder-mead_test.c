@@ -58,7 +58,7 @@ int main() {
 
 
         /* call objective function */
-        double fx = rosenbrock_2d(x.v[0], x.v[1]);
+        double fx = rosenbrock_2d(FNT_VECT_ELEM(x, 0), FNT_VECT_ELEM(x, 1));
 
         fnt_vect_print(&x, "f(", "%.3f");
         printf(") -> %g\n", fx);

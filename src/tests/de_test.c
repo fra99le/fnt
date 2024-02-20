@@ -82,7 +82,7 @@ int main() {
         if( fnt_next(fnt, &x) != FNT_SUCCESS ) { break; }
 
         /* call objective function */
-        double fx = ackley(x.v[0], x.v[1]);
+        double fx = ackley(FNT_VECT_ELEM(x, 0), FNT_VECT_ELEM(x, 1));
 
         if( fnt_verbose_level >= FNT_INFO ) {
             fnt_vect_print(&x, "f(", "%.3f");

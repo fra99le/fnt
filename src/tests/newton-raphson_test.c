@@ -61,11 +61,11 @@ int main() {
         if( fnt_next(fnt, &x) != FNT_SUCCESS ) { break; }
 
         /* call objective function */
-        double fx = polynomial(x.v[0]);
-        dfdx.v[0] = derivative(x.v[0]);
+        double fx = polynomial(FNT_VECT_ELEM(x, 0));
+        FNT_VECT_ELEM(dfdx, 0) = derivative(FNT_VECT_ELEM(x, 0));
 
         fnt_vect_print(&x, "f(", "%.3f");
-        printf(") -> %g\tf'(x) -> %g\n", fx, dfdx.v[0]);
+        printf(") -> %g\tf'(x) -> %g\n", fx, FNT_VECT_ELEM(dfdx, 0));
 
         /* update method */
         if( fnt_set_value_gradient(fnt, &x, fx, &dfdx) != FNT_SUCCESS ) { break; }
