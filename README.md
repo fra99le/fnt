@@ -24,7 +24,7 @@ would be called, then update the library with the value returned.
 
 Build from source with `cmake`:
 ```text
-$ git clone git@github.com:fra99le/fnt.git
+$ git clone https://github.com/fra99le/fnt.git
 $ cd fnt
 $ cmake .
 $ make
