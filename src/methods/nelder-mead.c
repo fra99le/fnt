@@ -196,13 +196,31 @@ int method_free(void **nm_ptr) {
 
 
  
-int method_info(void *nm_ptr) {
-    /* argument isn't used, but is there for consistency. */
-
-    /* TODO: Write info section for Nelder-Mead. */
-    /* don't forget to describe hyper-parameters and their ranges */
-    printf("Nelder-Mead info still needs to be filled in.\n");
-
+/* \brief Display information about the method to the console.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int method_info() {
+    printf(
+"Nelder-Mead is minimization method which uses a simplex of points and an\n"
+"an update staategy to pick new points.\n"
+"\n"
+"Hyper-parameters:\n"
+"name\trequired\ttype\tDefault\tDescription\n"
+"alpha\toptional\tdouble\t1.0\tReflection scaling factor (alpha>0).\n"
+"beta\toptional\tdouble\t0.5\tContraction scaling factor (0<beta<1).\n"
+"gamma\toptional\tdouble\t2.0\tExpand scaling factor (gamma>1).\n"
+"delta\toptional\tdouble\t0.5\tShrink scaling factor (0<delta<1).\n"
+"\n"
+"References:\n"
+"J. A. Nelder, R. Mead, A Simplex Method for Function Minimization,\n"
+"\tThe Computer Journal, Volume 7, Issue 4, January 1965, Pages 308–313,\n"
+"\thttps://doi.org/10.1093/comjnl/7.4.308\n"
+"Errata, The Computer Journal, Volume 8, Issue 1, April 1965, Page 27,\n"
+"\thttps://doi.org/10.1093/comjnl/8.1.27\n"
+"Saša Singer and John Nelder (2009) Nelder-Mead algorithm.\n"
+"\tScholarpedia, 4(7):2928.\n"
+"\thttp://dx.doi.org/10.4249/scholarpedia.2928\n"
+);
     return FNT_FAILURE;
 }
 
