@@ -140,7 +140,7 @@ typedef struct nelder_mead {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"nelder-mead",size) >= size ) {
+    if( snprintf(name, size, "nelder-mead") >= size ) {
         return FNT_FAILURE;
     }
 

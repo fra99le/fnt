@@ -36,7 +36,7 @@ typedef struct newton_raphson {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"newton-raphson",size) >= size ) {
+    if( snprintf(name, size, "newton-raphson") >= size ) {
         return FNT_FAILURE;
     }
 

@@ -50,7 +50,7 @@ typedef struct brent_dekker {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name, "brent-dekker", size) >= size ) {
+    if( snprintf(name,  size,  "brent-dekker") >= size ) {
         return FNT_FAILURE;
     }
 

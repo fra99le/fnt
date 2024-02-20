@@ -29,7 +29,7 @@ typedef struct stub {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"stub",size) >= size ) {
+    if( snprintf(name, size, "stub") >= size ) {
         return FNT_FAILURE;
     }
 

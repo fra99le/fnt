@@ -48,7 +48,7 @@ typedef struct bisection {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"bisection",size) >= size ) {
+    if( snprintf(name, size, "bisection") >= size ) {
         return FNT_FAILURE;
     }
 

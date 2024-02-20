@@ -40,7 +40,7 @@ typedef struct secant {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"secant",size) >= size ) {
+    if( snprintf(name, size, "secant") >= size ) {
         return FNT_FAILURE;
     }
 

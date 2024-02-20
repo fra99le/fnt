@@ -167,7 +167,7 @@ static int de_fill_first_gen(de_t *ptr) {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( strlcpy(name,"differential evolution",size) >= size ) {
+    if( snprintf(name, size, "differential evolution") >= size ) {
         return FNT_FAILURE;
     }
 
