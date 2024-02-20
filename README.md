@@ -139,14 +139,14 @@ to the objective function to use this alternate polynomial function.
 Thus the objective function call in the while loop:
 ```c
 /* call objective function */
-double fx = polynomial(x.v[0]);
+double fx = polynomial(FNT_VECT_ELEM(x, 0));
 ```
 
 Becomes:
 ```c
 /* call objective function */
 double[] coeffs = [5, -6.0, -5.0, 3.0]; // 3x^3 - 5x^2 - 6x + 5
-double fx = polynomial(x.v[0], 3, coeffs);
+double fx = polynomial(FNT_VECT_ELEM(x, 0), 3, coeffs);
 ```
 
 No other changes are required.
