@@ -38,6 +38,8 @@ int method_name(char *name, int size) {
 
 
 /* \brief Initialize intenal state for method.
+ * \param handle_ptr Pointer to the method handle pointer.
+ * \param dimensions Number of dimensions in the objactive function input.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_init(void **handle_ptr, int dimensions) {
@@ -52,6 +54,10 @@ int method_init(void **handle_ptr, int dimensions) {
 }
 
 
+/* \brief Free any resources allocated for the method.
+ * \param handle_ptr Pointer to the method handle pointer.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_free(void **handle_ptr) {
     if( handle_ptr == NULL )    { return FNT_FAILURE; }
     if( *handle_ptr == NULL )   { return FNT_FAILURE; }
@@ -85,6 +91,7 @@ int method_info() {
 
 
 /* \brief Set any hyper-parameters needed for the method.
+ * \param handle Pointer to the method handle.
  * \param id The name of the hyper-parameter.
  * \param value_ptr A pointer to the value being set.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
@@ -101,6 +108,12 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 }
 
 
+/* \brief Get any hyper-parameters values form the method.
+ * \param handle Pointer to the method handle.
+ * \param id The name of the hyper-parameter.
+ * \param value_ptr A pointer to the value being set.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
