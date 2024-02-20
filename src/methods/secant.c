@@ -131,12 +131,12 @@ int method_next(void *handle, fnt_vect_t *vec) {
     if( vec->v == NULL )    { return FNT_FAILURE; }
 
     if( ptr->state == secant_initial ) {
-        vec->v[0] = ptr->x_0;
+        FNT_VECT_ELEM(*vec, 0) = ptr->x_0;
         return FNT_SUCCESS;
     }
 
     /* fill vector pointed to by vec with next input to try */
-    vec->v[0] = ptr->x_next;
+    FNT_VECT_ELEM(*vec, 0) = ptr->x_next;
 
     return FNT_SUCCESS;
 }
@@ -149,7 +149,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     if( vec->v == NULL )    { return FNT_FAILURE; }
 
     if( ptr->state == secant_initial ) {
-        ptr->x_prev = vec->v[0];
+        ptr->x_prev = FNT_VECT_ELEM(*vec, 0);
         ptr->fx_prev = value;
 
         ptr->x_next = ptr->x_1;
@@ -159,7 +159,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     }
 
     /* update method using value */
-    double x = vec->v[0];
+    double x = FNT_VECT_ELEM(*vec, 0);
     double fx = value;
 
     double x_prev = ptr->x_prev;

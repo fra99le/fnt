@@ -153,11 +153,11 @@ int method_next(void *handle, fnt_vect_t *vec) {
     if( vec == NULL )       { return FNT_FAILURE; }
     bisection_t *ptr = (bisection_t*)handle;
 
-    if( ptr->state == initial )     { vec->v[0] = ptr->a; return FNT_SUCCESS; }
-    if( ptr->state == initial2 )    { vec->v[0] = ptr->b; return FNT_SUCCESS; }
+    if( ptr->state == initial )     { FNT_VECT_ELEM(*vec, 0) = ptr->a; return FNT_SUCCESS; }
+    if( ptr->state == initial2 )    { FNT_VECT_ELEM(*vec, 0) = ptr->b; return FNT_SUCCESS; }
 
     /* fill vector pointed to by vec with next input to try */
-    vec->v[0] = 0.5*ptr->a + 0.5*ptr->b;
+    FNT_VECT_ELEM(*vec, 0) = 0.5*ptr->a + 0.5*ptr->b;
 
     return FNT_SUCCESS;
 }
@@ -200,14 +200,14 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     if( ptr->state != running ) { return FNT_FAILURE; }
 
     if( value < 0.0 ) {
-        ptr->a = vec->v[0];
+        ptr->a = FNT_VECT_ELEM(*vec, 0);
         ptr->f_a = value;
     } else if( value > 0.0 ) {
-        ptr->b = vec->v[0];
+        ptr->b = FNT_VECT_ELEM(*vec, 0);
         ptr->f_b = value;
     } else if( value == 0.0 ) {
-        ptr->a = vec->v[0];
-        ptr->a = vec->v[0];
+        ptr->a = FNT_VECT_ELEM(*vec, 0);
+        ptr->b = FNT_VECT_ELEM(*vec, 0);
         ptr->f_a = 0.0;
         ptr->f_b = 0.0;
         ptr->state = done;

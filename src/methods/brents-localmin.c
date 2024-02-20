@@ -159,7 +159,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
         double v, w, x, e;
         v = w = x = a + c * (b - a);   e = 0;
         double d = 0.0;  /* from errata */
-        vec->v[0] = x;  /* f(x) is needed */
+        FNT_VECT_ELEM(*vec, 0) = x;  /* f(x) is needed */
 
         ptr->c = c;
         ptr->v = v;
@@ -172,7 +172,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
         return FNT_SUCCESS;
     } else {
-        vec->v[0] = ptr->u; /* f(u) is needed */
+        FNT_VECT_ELEM(*vec, 0) = ptr->u; /* f(u) is needed */
         DEBUG("Requesting f(u) = f(%g).\n", ptr->u);
         return FNT_SUCCESS;
     }
@@ -202,7 +202,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     double d = ptr->d;
 
     if( ptr->state == brent_initial ) {
-        v  = w = x = vec->v[0];
+        v  = w = x = FNT_VECT_ELEM(*vec, 0);
         fv = fw = fx = value;
 
         DEBUG("Got initial value f(x) = f(%g) = %g.\n", x, fx);
@@ -216,7 +216,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     if( ptr->state == brent_running ) {
         /* skip this on the first iteration,
          * as it is the end of the original loop. */
-        u = vec->v[0];
+        u = FNT_VECT_ELEM(*vec, 0);
         fu = value;
 
         DEBUG("Updating with f(u) = f(%g) = %g.\n", u, fu);

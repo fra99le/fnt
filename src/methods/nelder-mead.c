@@ -478,7 +478,7 @@ int method_next(void *nm_ptr, fnt_vect_t *vector) {
         if( nm->simplex.count > 0 ) {
             int pos = nm->simplex.count-1;
             fnt_vect_copy(vector, &nm->seed);
-            vector->v[pos] += nm->simplex.count;
+            FNT_VECT_ELEM(*vector, pos) += nm->simplex.count;
         } else if( nm->seed.n == vector->n ) {
             fnt_vect_copy(vector, &nm->seed);
         } else {

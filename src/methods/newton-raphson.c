@@ -124,7 +124,7 @@ int method_next(void *handle, fnt_vect_t *vec) {
     if( vec == NULL )       { return FNT_FAILURE; }
 
     /* fill vector pointed to by vec with next input to try */
-    vec->v[0] = ptr->next_x;
+    FNT_VECT_ELEM(*vec, 0) = ptr->next_x;
 
     return FNT_SUCCESS;
 }
@@ -146,9 +146,9 @@ int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_
     if( gradient == NULL )  { return FNT_FAILURE; }
 
     /* update method using value and derivative/gradient */
-    double x = vec->v[0];
+    double x = FNT_VECT_ELEM(*vec, 0);
     double fx = value;
-    double fx_der = gradient->v[0];
+    double fx_der = FNT_VECT_ELEM(*gradient, 0);
 
     if( fabs(fx_der) < epsilon ) { return FNT_FAILURE; }
 

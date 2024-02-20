@@ -161,12 +161,12 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
     /* fill vector pointed to by vec with next input to try */
     if( ptr->state == brent_dekker_initial ) {
-        vec->v[0] = ptr->a;
+        FNT_VECT_ELEM(*vec, 0) = ptr->a;
         return FNT_SUCCESS;
     }
 
     /* after initialization, only f(b) is required per iteration. */
-    vec->v[0] = ptr->b;
+    FNT_VECT_ELEM(*vec, 0) = ptr->b;
 
     return FNT_SUCCESS;
 }
@@ -180,7 +180,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
     /* update method using value */
     if( ptr->state == brent_dekker_initial ) {
-        ptr->a = vec->v[0];
+        ptr->a = FNT_VECT_ELEM(*vec, 0);
         ptr->f_a = value;
 
         ptr->state = brent_dekker_initial2;
@@ -188,7 +188,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         return FNT_SUCCESS;
     }
     if( ptr->state == brent_dekker_initial2 ) {
-        ptr->b = vec->v[0];
+        ptr->b = FNT_VECT_ELEM(*vec, 0);
         ptr->f_b = value;
 
         if( ptr->f_a * ptr->f_b > 0.0 ) {
@@ -212,7 +212,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
     /* copy common values into local variables */
     double a = ptr->a;
-    double b = vec->v[0];   /* update b */
+    double b = FNT_VECT_ELEM(*vec, 0);   /* update b */
     double c = ptr->c;
     double f_a = ptr->f_a;
     double f_b = value;     /* update f(b) */

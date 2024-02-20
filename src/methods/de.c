@@ -118,16 +118,16 @@ static int de_fill_first_gen(de_t *ptr) {
             /* TODO: rnd should be normally distributed with a hyper-parameter
              * specifying the std. dev. */
             double rnd = FNT_RAND() / (double)FNT_RAND_MAX - 0.5;
-            ptr->v.v[j] = ptr->start_point.v[j]  + rnd;
+            FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(ptr->start_point, j)  + rnd;
 
             /* apply bounds, as available */
             if( ptr->has_lower_bounds
-                && ptr->v.v[j] < ptr->lower_bounds.v[j] ) {
-                ptr->v.v[j] = ptr->lower_bounds.v[j];
+                && FNT_VECT_ELEM(ptr->v, j) < FNT_VECT_ELEM(ptr->lower_bounds, j) ) {
+                FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(ptr->lower_bounds, j);
             }
             if( ptr->has_upper_bounds
-                && ptr->v.v[j] > ptr->upper_bounds.v[j] ) {
-                ptr->v.v[j] = ptr->upper_bounds.v[j];
+                && FNT_VECT_ELEM(ptr->v, j) > FNT_VECT_ELEM(ptr->upper_bounds, j) ) {
+                FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(ptr->upper_bounds, j);
             }
         }
     } else {
@@ -139,18 +139,18 @@ static int de_fill_first_gen(de_t *ptr) {
             double lower = -1.0;
             double upper = 1.0;
             if( ptr->has_lower_bounds) {
-                lower = ptr->lower_bounds.v[j];
+                lower = FNT_VECT_ELEM(ptr->lower_bounds, j);
                 if( !ptr->has_upper_bounds ) {
                     upper = lower + 1.0;
                 }
             }
             if( ptr->has_upper_bounds) {
-                upper = ptr->upper_bounds.v[j];
+                upper = FNT_VECT_ELEM(ptr->upper_bounds, j);
                 if( !ptr->has_lower_bounds ) {
                     lower = lower - 1.0;
                 }
             }
-            ptr->v.v[j] = lower + rnd * (upper-lower);
+            FNT_VECT_ELEM(ptr->v, j) = lower + rnd * (upper-lower);
         }
     }
 
@@ -297,12 +297,12 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 
     if( (ptr->has_lower_bounds && ptr->has_upper_bounds) ) {
         for(int j=0; j<ptr->lower_bounds.n; ++j) {
-            double lower = ptr->lower_bounds.v[j];
-            double upper = ptr->upper_bounds.v[j];
+            double lower = FNT_VECT_ELEM(ptr->lower_bounds, j);
+            double upper = FNT_VECT_ELEM(ptr->upper_bounds, j);
             if( upper < lower ) {
                 WARN("WARNING: Upper and lower bounds for dimension %i are out of order (lower=%g, upper=%g), swapping them.\n", j, lower, upper);
-                ptr->lower_bounds.v[j] = upper;
-                ptr->upper_bounds.v[j] = lower;
+                FNT_VECT_ELEM(ptr->lower_bounds, j) = upper;
+                FNT_VECT_ELEM(ptr->upper_bounds, j) = lower;
             }
         }
     }
@@ -417,15 +417,15 @@ int method_next(void *handle, fnt_vect_t *vec) {
     /* apply lower and upper bounds */
     if( ptr->has_lower_bounds ) {
         for(int j=0; j<ptr->v.n; ++j) {
-            if( ptr->v.v[j] < ptr->lower_bounds.v[j] ) {
-                ptr->v.v[j] = ptr->lower_bounds.v[j];
+            if( FNT_VECT_ELEM(ptr->v, j) < FNT_VECT_ELEM(ptr->lower_bounds, j) ) {
+                FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(ptr->lower_bounds, j);
             }
         }
     }
     if( ptr->has_upper_bounds ) {
         for(int j=0; j<ptr->v.n; ++j) {
-            if( ptr->v.v[j] > ptr->upper_bounds.v[j] ) {
-                ptr->v.v[j] = ptr->upper_bounds.v[j];
+            if( FNT_VECT_ELEM(ptr->v, j) > FNT_VECT_ELEM(ptr->upper_bounds, j) ) {
+                FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(ptr->upper_bounds, j);
             }
         }
     }
