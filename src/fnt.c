@@ -48,7 +48,6 @@ typedef struct fnt_method {
     int (*info)();
     int (*hparam_set)(void *handle, char *id, void *value_ptr);
     int (*hparam_get)(void *handle, char *id, void *value_ptr);
-    int (*seed)(void *handle, fnt_vect_t *vec);
     int (*next)(void *handle, fnt_vect_t *vec);
     int (*value)(void *handle, fnt_vect_t *vec, double value);
     int (*value_gradient)(void *handle, fnt_vect_t *vec, double value, fnt_vect_t *gradient);
@@ -263,7 +262,6 @@ int fnt_method_load(context_t *ctx, char *filename) {
     ctx->method.info = dlsym(dl_handle, "method_info");
     ctx->method.hparam_get = dlsym(dl_handle, "method_hparam_get");
     ctx->method.hparam_set = dlsym(dl_handle, "method_hparam_set");
-    ctx->method.seed = dlsym(dl_handle, "method_seed");
     ctx->method.next = dlsym(dl_handle, "method_next");
     ctx->method.value = dlsym(dl_handle, "method_value");
     ctx->method.value_gradient = dlsym(dl_handle, "method_value_gradient");
@@ -447,29 +445,6 @@ int fnt_hparam_get(void *context, char *id, void *value_ptr) {
         INFO("Got hyper-parameter '%s'.\n", id);
     } else if( ret == FNT_FAILURE ) {
         ERROR("ERROR: Failed to get hyper-parameter '%s'.\n", id);
-    }
-
-    return ret;
-}
-
-
-int fnt_seed(void *context, fnt_vect_t *vec) {
-    context_t *ctx = (context_t*)context;
-    if( ctx == NULL )               { return FNT_FAILURE; }
-    if( ctx->method.seed == NULL )  { return FNT_FAILURE; }
-    if( vec == NULL )               { return FNT_FAILURE; }
-
-    if( ctx->method.seed == NULL ) {
-        ERROR("ERROR: Method '%s' does not provide a seed method.\n", ctx->method.name);
-        return FNT_FAILURE;
-    }
-
-    int ret = ctx->method.seed(ctx->method.handle, vec);
-
-    if( ret == FNT_SUCCESS ) {
-        INFO("Seeded input vector.\n");
-    } else if( ret == FNT_FAILURE ) {
-        ERROR("ERROR: Failed to seed input vector.\n");
     }
 
     return ret;

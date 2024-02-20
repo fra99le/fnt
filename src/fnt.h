@@ -61,13 +61,6 @@ int fnt_hparam_set(void *context, char *id, void *value_ptr);
  */
 int fnt_hparam_get(void *context, char *id, void *value_ptr);
 
-/** \brief Provide initial inputs values.
- * \param context FNT context for method.
- * \param vec Pointer to input vector being seeded.
- * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
- */
-int fnt_seed(void *context, fnt_vect_t *vec);
-
 /** \brief Get next input vector to try
  * \param context FNT context for method.
  * \param vec Pointer to allocated input vector to be filled in.

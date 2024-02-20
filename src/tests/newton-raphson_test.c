@@ -50,10 +50,6 @@ int main() {
     fnt_vect_calloc(&x, 1);
     fnt_vect_calloc(&dfdx, 1);
 
-    /* provide an initial guess */
-    x.v[0] = 0.0;
-    fnt_seed(fnt, &x);
-
     /* loop as long as method is not complete */
     while( fnt_done(fnt) == FNT_CONTINUE ) {
 

@@ -29,10 +29,6 @@ int main() {
     /* display info */
     fnt_info(fnt);
 
-    /* set threshold for completion */
-    double tolerance = 1e-5;
-    fnt_hparam_set(fnt, "tolerence", &tolerance);
-
     /* read and report default hyper-parameters */
     double alpha, beta, gamma, delta;
     fnt_hparam_get(fnt, "alpha", &alpha);
@@ -44,11 +40,6 @@ int main() {
     /* allocate input for objective function */
     fnt_vect_t x;
     fnt_vect_calloc(&x, 2);
-
-    /* provide an initial guess */
-    x.v[0] = 0.0;
-    x.v[1] = 0.0;
-    fnt_seed(fnt, &x);
 
     /* loop as long as method is not complete */
     while( fnt_done(fnt) == FNT_CONTINUE ) {
