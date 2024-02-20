@@ -56,3 +56,6 @@ dkms.conf
 
 # Vim files
 *.swp
+
+# Exclude downloaded references
+pdfs/
