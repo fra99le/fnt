@@ -23,7 +23,7 @@ int main() {
 
     void *fnt = NULL;
 
-    fnt_verbose(FNT_DEBUG); /* request informative output */
+    fnt_verbose(FNT_INFO); /* request informative output */
     fnt_init(&fnt, FNT_METHODS_DIR "/methods");
 
     /* load bisection method to find root for polynomial function */
