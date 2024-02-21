@@ -102,7 +102,9 @@ int method_info() {
 "t\toptional\tdouble\t1e-6\tMachine epsilon.\n"
 "\n"
 "References:\n"
-"R. P. Brent, Algorithms for Minimization without Derivatives,\n\tPrentice-Hall, Englewood Cliffs, New Jersey, 1973, 195 pp.\n\tISBN 0-13-022335-2.\n"
+"R. P. Brent, Algorithms for Minimization without Derivatives,\n"
+"\tPrentice-Hall, Englewood Cliffs, New Jersey, 1973, 195 pp.\n"
+"\tISBN 0-13-022335-2.\n"
 "https://maths-people.anu.edu.au/~brent/pub/pub011.html\n"
 );
     return FNT_SUCCESS;
