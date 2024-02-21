@@ -176,13 +176,3 @@ int method_done(void *handle) {
 
     return FNT_CONTINUE;
 }
-
-
-int method_result(void *handle, void *extra) {
-
-    /* Optional method to report any additional results if the method
-     * produces such results.
-     */
-
-    return FNT_FAILURE;
-}
