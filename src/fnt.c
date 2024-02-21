@@ -181,8 +181,8 @@ int fnt_register_method(context_t *ctx, char *filename) {
 
     /* set up list entry */
     fnt_method_list_entry_t *entry = calloc(1,sizeof(fnt_method_list_entry_t));
-    strlcpy(entry->name, name, sizeof(entry->name));
-    strlcpy(entry->path, filename, sizeof(entry->path));
+    snprintf(entry->name, sizeof(entry->name), "%s", name);
+    snprintf(entry->path, sizeof(entry->path), "%s", filename);
 
     /* add method entry to list of available methods */
     fnt_method_list_add(ctx, entry);
