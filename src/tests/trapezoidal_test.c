@@ -66,7 +66,7 @@ int main() {
     /* Get/report any results beyond best input vector. */
     double area = 0.0;
     fnt_result(fnt, &area);
-    printf("Area under polynomial is %g\n", area);
+    printf("Area under function is %g\n", area);
 
     /* free input vector */
     fnt_vect_free(&x);
