@@ -14,9 +14,10 @@
 #define FNT_METHODS_DIR "."
 #endif /* FNT_METHODS_DIR */
 
-double polynomial(double x) {
-    // 3x^3 - 5x^2 - 6x + 10
-    return 3*pow(x, 3.0) - 5*pow(x,2.0) - 6*x + 10;
+/* Example from page 427 of Fausett. */
+double one_over_x(double x) {
+    // 1/x
+    return 1.0 / x;
 }
 
 int main() {
@@ -35,12 +36,12 @@ int main() {
     fnt_info(fnt);
 
     /* place initial bounds for search */
-    double x_0 = 2.0;
-    double x_1 = 3.0;
-    int subintervals = 20;
+    double x_0 = 1.0;
+    double x_1 = 2.0;
+    int subintervals = 8;
     fnt_hparam_set(fnt, "lower", &x_0);
     fnt_hparam_set(fnt, "upper", &x_1);
-    fnt_hparam_set(fnt, "subintervals", &subintervals);
+    fnt_hparam_set(fnt, "n", &subintervals);
 
     /* allocate input for objective function */
     fnt_vect_t x;
@@ -53,7 +54,7 @@ int main() {
         if( fnt_next(fnt, &x) != FNT_SUCCESS ) { break; }
 
         /* call objective function */
-        double fx = polynomial(FNT_VECT_ELEM(x, 0));
+        double fx = one_over_x(FNT_VECT_ELEM(x, 0));
 
         fnt_vect_print(&x, "f(", "%.3f");
         printf(") -> %g\n", fx);

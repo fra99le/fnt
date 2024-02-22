@@ -20,14 +20,18 @@ typedef struct trapezoidal {
 
     /* method state */
     trapezoidal_state_t state;
-    double prev_fx;
+    double first_fx;
     double sum;
-    int curr_interval;
+    double last_fx;
+    int curr_subinterval;
 
     /* hyper-parameters */
     double x_0;
     double x_1;
-    int subintervals;
+    int n;
+
+    /* result */
+    double area;
 
 } trapezoidal_t;
 
@@ -61,7 +65,7 @@ int method_init(void **handle_ptr, int dimensions) {
 
     /* initialize method here */
     ptr->state = trapezoidal_initial;
-    ptr->curr_interval = 0;
+    ptr->curr_subinterval = 0;
 
     return FNT_SUCCESS;
 }
@@ -97,10 +101,11 @@ int method_info() {
 "name\trequired\ttype\tDefault\tDescription\n"
 "lower\tREQUIRED\tdouble\t0.0\tLower end of the interval being integrated.\n"
 "upper\tREQUIRED\tdouble\t1.0\tUpper end of the interval being integrated.\n"
-"subintervals\tREQUIRED\tint\t10\tNumber of trapezoids to use.\n"
+"n\tREQUIRED\tint\t10\tNumber of subintervals (i.e. trapezoids) to use.\n"
 "\n"
 "References:\n"
-"https://en.wikipedia.org/wiki/Trapezoidal_rule\n"
+"Fausett, L.V. (2002). Numerical Methods: Algorithms and Applications.\n"
+"\tISBN 0-13-031400-5\n"
 );
     return FNT_SUCCESS;
 }
@@ -120,7 +125,8 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 
     FNT_HPARAM_SET("lower", id, double, value_ptr, ptr->x_0);
     FNT_HPARAM_SET("upper", id, double, value_ptr, ptr->x_1);
-    FNT_HPARAM_SET("subintervals", id, int, value_ptr, ptr->subintervals);
+    FNT_HPARAM_SET("subintervals", id, int, value_ptr, ptr->n);
+    FNT_HPARAM_SET("n", id, int, value_ptr, ptr->n);
 
     return FNT_SUCCESS;
 }
@@ -138,9 +144,10 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( handle == NULL )    { return FNT_FAILURE; }
     trapezoidal_t *ptr = (trapezoidal_t*)handle;
 
-    FNT_HPARAM_GET("x_0", id, double, ptr->x_0, value_ptr);
-    FNT_HPARAM_GET("x_1", id, double, ptr->x_1, value_ptr);
-    FNT_HPARAM_GET("subintervals", id, int, ptr->subintervals, value_ptr);
+    FNT_HPARAM_GET("lower", id, double, ptr->x_0, value_ptr);
+    FNT_HPARAM_GET("upper", id, double, ptr->x_1, value_ptr);
+    FNT_HPARAM_GET("subintervals", id, int, ptr->n, value_ptr);
+    FNT_HPARAM_GET("n", id, int, ptr->n, value_ptr);
 
     return FNT_SUCCESS;
 }
@@ -164,8 +171,10 @@ int method_next(void *handle, fnt_vect_t *vec) {
     }
 
     /* compute next x to be evaluated */
-    double delta_x = ptr->x_1 - ptr->x_0;
-    FNT_VECT_ELEM(*vec, 0) = ptr->x_0 + (double)ptr->curr_interval * (ptr->x_1 - ptr->x_0) / (double)ptr->subintervals;
+    FNT_VECT_ELEM(*vec, 0) = ptr->x_0
+                                + (double)ptr->curr_subinterval
+                                * (ptr->x_1 - ptr->x_0)
+                                / (double)ptr->n;
 
     return FNT_SUCCESS;
 }
@@ -177,19 +186,43 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     if( vec->v == NULL )    { return FNT_FAILURE; }
     trapezoidal_t *ptr = (trapezoidal_t*)handle;
 
+    if( ptr->state == trapezoidal_done ) {
+        ERROR("Attempting to update method with a value after method completed.\n");
+        return FNT_FAILURE;
+    }
+
     /* update method using value */
     if( ptr->state == trapezoidal_initial ) {
+        DEBUG("Recording first f(%g)=%g.\n", FNT_VECT_ELEM(*vec, 0), value);
+
         /* record first point, but no area is computable yet. */
-        ptr->prev_fx = value;
-        ptr->curr_interval = 1;
+        ptr->first_fx = value;
+        ptr->sum = 0.0;
+        ptr->curr_subinterval = 1;
+
+        /* update state to running */
         ptr->state = trapezoidal_running;
+
+        return FNT_SUCCESS;
+    } else if( ptr->curr_subinterval >= ptr->n ) {
+        DEBUG("Recording final f(%g)=%g and computing area.\n", FNT_VECT_ELEM(*vec, 0), value);
+
+        /* compute final result */
+        ptr->last_fx = value;
+        double h = (ptr->x_1 - ptr->x_0) / (double)ptr->n;
+        ptr->area = 0.5 * h * (ptr->first_fx + ptr->last_fx + 2.0 * ptr->sum);
+
+        /* set state to done */
+        ptr->state = trapezoidal_done;
+
         return FNT_SUCCESS;
     }
 
-    /* add area of trapazoid */
-    ptr->sum += 0.5 * (ptr->prev_fx + value);
-    ptr->prev_fx = value;
-    ++ptr->curr_interval;
+    DEBUG("Adding f(%g)=%g to sum.\n", FNT_VECT_ELEM(*vec, 0), value);
+
+    /* add value for use in area calculation and update subinteval */
+    ptr->sum += value;
+    ++ptr->curr_subinterval;
 
     return FNT_SUCCESS;
 }
@@ -199,8 +232,7 @@ int method_done(void *handle) {
     if( handle == NULL )    { return FNT_FAILURE; }
     trapezoidal_t *ptr = (trapezoidal_t*)handle;
 
-    if( ptr->curr_interval >= ptr->subintervals ) {
-        ptr->state = trapezoidal_done;
+    if( ptr->state == trapezoidal_done ) {
         return FNT_DONE;
     }
 
@@ -218,7 +250,7 @@ int method_result(void *handle, void *extra) {
     }
 
     /* report the sum */
-    *(double*)extra = ptr->sum * (ptr->x_1 - ptr->x_0) / ptr->subintervals;
+    *(double*)extra = ptr->area;
 
-    return FNT_FAILURE;
+    return FNT_SUCCESS;
 }
