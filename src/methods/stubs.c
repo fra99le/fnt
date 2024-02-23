@@ -116,10 +116,10 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_hparam_get(void *handle, char *id, void *value_ptr) {
+    stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    if( handle == NULL )    { return FNT_FAILURE; }
-    stub_t *ptr = (stub_t*)handle;
 
     FNT_HPARAM_GET("placeholder", id, int, ptr->placeholder, value_ptr);
 
@@ -128,10 +128,10 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
 
 
 int method_next(void *handle, fnt_vect_t *vec) {
-    if( handle == NULL )    { return FNT_FAILURE; }
+    stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( vec == NULL )       { return FNT_FAILURE; }
     if( vec->v == NULL )    { return FNT_FAILURE; }
-    stub_t *ptr = (stub_t*)handle;
 
     /* fill vector pointed to by vec with next input to try */
 
@@ -140,10 +140,10 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
 
 int method_value(void *handle, fnt_vect_t *vec, double value) {
-    if( handle == NULL )    { return FNT_FAILURE; }
+    stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( vec == NULL )       { return FNT_FAILURE; }
     if( vec->v == NULL )    { return FNT_FAILURE; }
-    stub_t *ptr = (stub_t*)handle;
 
     /* update method using value */
 
@@ -152,10 +152,10 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 
 
 int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_t gradient) {
-    if( handle == NULL )    { return FNT_FAILURE; }
+    stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( vec == NULL )       { return FNT_FAILURE; }
     if( vec->v == NULL )    { return FNT_FAILURE; }
-    stub_t *ptr = (stub_t*)handle;
 
     /* update method using value and derivative/gradient */
 
@@ -164,8 +164,8 @@ int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_
 
 
 int method_done(void *handle) {
-    if( handle == NULL )    { return FNT_FAILURE; }
     stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
 
     /* test for completion
      *  Return FNT_DONE when comlete, or FNT_CONTINUE when not done.
