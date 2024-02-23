@@ -49,6 +49,22 @@
         *(type*)(dst_ptr) = (src); \
     }
 
+
+/* MARK: Result accessing macros */
+
+#define FNT_RESULT_GET(name, id, type, src, dst_ptr) \
+    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+        *(type*)(dst_ptr) = (src); \
+    }
+
+#define FNT_RESULT_GET_VECT(name, id, src, dst_ptr) \
+    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+        fnt_vect_copy(dst_ptr, &src); \
+    }
+
+
+/* MARK: Externed Global Variables */
+
 extern int fnt_verbose_level;
 
 #endif /* FNT_UTIL_H */

@@ -91,27 +91,12 @@ int fnt_set_value_gradient(void *context, fnt_vect_t *vec, double value, fnt_vec
  */
 int fnt_done(void *context);
 
-/** \brief Get optimal input vector (i.e., the one that produced the lowest objective function value).
- * \param context FNT context for method.
- * \param vec Pointer to allocated input vector to be filled in.
- * \param val Pointer to a double that will be filled with objective value at found minimum.
- * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
- */
-int fnt_minimum(void *context, fnt_vect_t *vec, double *val);
-
-/** \brief Get root input vector (i.e., the one that produced the objective function value closest to zero).
- * \param context FNT context for method.
- * \param vec Pointer to allocated input vector to be filled in.
- * \param val Pointer to a double that will be filled with objective value at found root.
- * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
- */
-int fnt_root(void *context, fnt_vect_t *vec, double *val);
-
 /** \brief Produce final result from method,
  * \param context FNT context for which fnt_done returns FNT_DONE.
- * \param extra Method dependant.
+ * \param name Name of the result to be placed into value_ptr.
+ * \param value_ptr Pointer to variable to be set to named value.
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
-int fnt_result(void *context, void *extra);
+int fnt_result(void *context, char *name, void *value_ptr);
 
 #endif /* FNT_H */
