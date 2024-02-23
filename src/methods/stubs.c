@@ -17,8 +17,16 @@ typedef enum stub_states {
 } stub_state_t;
 
 typedef struct stub {
+
+    /* hyper-parameters */
     int placeholder;
+
+    /* method state */
+    stub_state_t state;
+
+    /* results */
     double result;
+
 } stub_t;
 
 
@@ -50,6 +58,7 @@ int method_init(void **handle_ptr, int dimensions) {
     *handle_ptr = (void*)ptr;
 
     /* initialize method here */
+    ptr->state = stub_initial;
 
     return FNT_SUCCESS;
 }
