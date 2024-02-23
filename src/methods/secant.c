@@ -20,15 +20,21 @@ typedef enum secant_state {
 } secant_state_t;
 
 typedef struct secant {
-    secant_state_t state;
 
+    /* method internal state */
+    secant_state_t state;
+    double x_prev;
+    double fx_prev;
+    double x_next;
+
+    /* hyper-parameters */
     double x_0;
     double x_1;
     double f_tol;
 
-    double x_prev;
-    double fx_prev;
-    double x_next;
+    /* results */
+    double root_x;
+
 } secant_t;
 
 
@@ -202,9 +208,25 @@ int method_done(void *handle) {
      *  Return FNT_DONE when comlete, or FNT_CONTINUE when not done.
      */
     if( ptr->f_tol > fabs(ptr->fx_prev) ) {
+
+        /* record result */
+        ptr->root_x = ptr->x_prev;
+
+        /* update state */
         ptr->state = secant_done;
+
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    secant_t *ptr = (secant_t*)handle;
+
+    FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
+
+    return FNT_SUCCESS;
 }

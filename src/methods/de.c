@@ -41,6 +41,10 @@ typedef struct de {
     /* trial vector */
     fnt_vect_t v;
     int current;    /* index of vector that v might replace */
+
+    /* results */
+    double min_fx;
+    fnt_vect_t min_x;
 } de_t;
 
 
@@ -197,6 +201,10 @@ int method_init(void **handle_ptr, int dimensions) {
     ptr->current = 0;
     ptr->best = 0;
 
+    /* allocate/initialize results */
+    fnt_vect_calloc(&ptr->min_x, dimensions);
+    ptr->min_fx = 0.0;
+
     *handle_ptr = (void*)ptr;
 
     return FNT_SUCCESS;
@@ -216,6 +224,9 @@ int method_free(void **handle_ptr) {
     if( ptr->has_start_point )  { fnt_vect_free(&ptr->start_point);  }
     if( ptr->has_lower_bounds ) { fnt_vect_free(&ptr->lower_bounds); }
     if( ptr->has_upper_bounds ) { fnt_vect_free(&ptr->upper_bounds); }
+
+    /* free results */
+    fnt_vect_free(&ptr->min_x);
 
     free(ptr);  *handle_ptr = ptr = NULL;
 
@@ -458,6 +469,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
             fnt_vect_print(vec, "for input ", NULL);
             INFO(" at position %d.\n", curr);
         }
+
         /* update best */
         ptr->best = curr;
     }
@@ -503,9 +515,27 @@ int method_done(void *handle) {
     }
 
     if( ptr->iterations <= 0 ) {
+
+        /* update result fields */
+        ptr->min_fx = ptr->fx[ptr->best];
+        fnt_vect_copy(&ptr->min_x, &ptr->x[ptr->best]);
+
+        /* mark method as complete */
         ptr->state = de_done;
+
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    de_t *ptr = (de_t*)handle;
+
+    FNT_RESULT_GET_VECT("minimum x", id, ptr->min_x, value_ptr);
+    FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
+
+    return FNT_SUCCESS;
 }

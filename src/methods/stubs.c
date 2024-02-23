@@ -18,6 +18,7 @@ typedef enum stub_states {
 
 typedef struct stub {
     int placeholder;
+    double result;
 } stub_t;
 
 
@@ -174,13 +175,14 @@ int method_done(void *handle) {
 }
 
 
-int method_result(void *handle, void *extra) {
-    if( handle == NULL )    { return FNT_FAILURE; }
+int method_result(void *handle, char *id, void *value_ptr) {
     stub_t *ptr = (stub_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
 
     /* Optional method to report any additional results if the method
      * produces such results.
      */
+    FNT_RESULT_GET("result", id, double, ptr->result, value_ptr);
 
     return FNT_FAILURE;
 }

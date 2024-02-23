@@ -39,6 +39,9 @@ typedef struct brent_dekker {
     double d;
     double e;
 
+    /* result */
+    double root_x;
+
 } brent_dekker_t;
 
 
@@ -291,6 +294,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         /* method has converged to a solution */
         ptr->state = brent_dekker_done;
         /* b contains the result. */
+        ptr->root_x = ptr->b;
     }
 
     /* copy local variables back to presistent struct */
@@ -319,6 +323,16 @@ int method_done(void *handle) {
     } else {
         return FNT_CONTINUE;
     }
+
+    return FNT_FAILURE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    brent_dekker_t *ptr = (brent_dekker_t*)handle;
+
+    FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
 
     return FNT_FAILURE;
 }

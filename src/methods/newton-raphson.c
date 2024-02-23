@@ -20,11 +20,19 @@ typedef enum nr_state {
 } nr_state_t;
 
 typedef struct newton_raphson {
-    nr_state_t state;
 
-    double f_tol;
-    double last_fx;;
+    /* method internal state */
+    nr_state_t state;
+    double last_x;
+    double last_fx;
     double next_x;
+
+    /* hyper-parameters */
+    double f_tol;
+
+    /* result */
+    double root_x;
+
 } newton_raphson_t;
 
 
@@ -152,6 +160,7 @@ int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_
 
     if( fabs(fx_der) < epsilon ) { return FNT_FAILURE; }
 
+    ptr->last_x = x;
     ptr->last_fx = fx;
     ptr->next_x = x - fx / fx_der;
 
@@ -171,8 +180,22 @@ int method_done(void *handle) {
      *  Return FNT_DONE when comlete, or FNT_CONTINUE when not done.
      */
     if( ptr->f_tol > fabs(ptr->last_fx) ) {
+
+        /* record result */
+        ptr->root_x = ptr->last_x;
+
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    newton_raphson_t *ptr = (newton_raphson_t*)handle;
+
+    FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
+
+    return FNT_SUCCESS;
 }

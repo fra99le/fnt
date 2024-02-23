@@ -240,7 +240,7 @@ int method_done(void *handle) {
 }
 
 
-int method_result(void *handle, void *extra) {
+int method_result(void *handle, char *id, void *value_ptr) {
     if( handle == NULL )    { return FNT_FAILURE; }
     trapezoidal_t *ptr = (trapezoidal_t*)handle;
 
@@ -249,8 +249,8 @@ int method_result(void *handle, void *extra) {
         return FNT_FAILURE;
     }
 
-    /* report the sum */
-    *(double*)extra = ptr->area;
+    /* report the area under the function */
+    FNT_RESULT_GET("area", id, double, ptr->area, value_ptr);
 
     return FNT_SUCCESS;
 }

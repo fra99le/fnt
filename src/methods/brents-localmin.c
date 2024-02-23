@@ -39,6 +39,11 @@ typedef struct brent {
     /* hyper-parameters */
     double eps;
     double t;
+
+    /* result */
+    double min_x;
+    double min_fx;
+
 } brent_t;
 
 
@@ -291,6 +296,8 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         DEBUG("Setting state to done.\n");
         ptr->state = brent_done;
         /* local minimum should be in fx */
+        ptr->min_x = ptr->x;
+        ptr->min_fx = ptr->fx;
     }
 
     ptr->a = a;
@@ -325,4 +332,15 @@ int method_done(void *handle) {
     }
 
     return FNT_FAILURE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    brent_t *ptr = (brent_t*)handle;
+
+    FNT_RESULT_GET("minimum x", id, double, ptr->min_x, value_ptr);
+    FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
+
+    return FNT_SUCCESS;
 }

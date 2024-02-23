@@ -129,6 +129,10 @@ typedef struct nelder_mead {
     double dist_threshold;
     int max_iterations;
 
+    /* results */
+    fnt_vect_t min_x;
+    double min_fx;
+
 } nelder_mead_t;
 
 
@@ -171,6 +175,10 @@ int method_init(void **nm_ptr, int dimensions) {
     fnt_vect_calloc(&nm->x_e.parameters, dimensions);
     fnt_vect_calloc(&nm->x_c.parameters, dimensions);
     fnt_vect_calloc(&nm->s_shrink, dimensions);
+
+    /* allocate space for result */
+    fnt_vect_calloc(&nm->min_x, dimensions);
+    nm->min_fx = 0.0;
 
     nm_simplex_init(&nm->simplex, dimensions);
 
@@ -602,14 +610,18 @@ int nm_simplex_point(void *nm_ptr, int which, fnt_vect_t *point, double *value) 
 
 
 int method_done(void *nm_ptr) {
+    if( nm_ptr == NULL )        { return FNT_FAILURE; }
     nelder_mead_t *nm = nm_ptr;
-    if( nm->state == initial ) {
-        return FNT_CONTINUE;
-    }
+    if( nm->state == initial )  { return FNT_CONTINUE; }
 
     /* check maximum iterations */
     if( nm->iterations > nm->max_iterations ) {
         INFO("Iteration count (%i) exceeded limit (%i).\n", nm->iterations, nm->max_iterations); 
+
+        /* record result */
+        fnt_vect_copy(&nm->min_x, &nm->simplex.points[0].parameters);
+        nm->min_fx = nm->simplex.points[0].value;
+
         return FNT_DONE;
     }
 
@@ -623,9 +635,25 @@ int method_done(void *nm_ptr) {
     printf("iteration: %i; dist: %g\n", nm->iterations, dist);
     #endif /* 0 */
     if( dist < nm->dist_threshold ) {
-        INFO("Simplex size limit (%g) reached (%g).\n", nm->dist_threshold, dist); 
+        INFO("Simplex minimum size limit (%g) reached (%g).\n", nm->dist_threshold, dist); 
+
+        /* record result */
+        fnt_vect_copy(&nm->min_x, &nm->simplex.points[0].parameters);
+        nm->min_fx = nm->simplex.points[0].value;
+
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    nelder_mead_t *ptr = (nelder_mead_t*)handle;
+
+    FNT_RESULT_GET_VECT("minimum x", id, ptr->min_x, value_ptr);
+    FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
+
+    return FNT_SUCCESS;
 }

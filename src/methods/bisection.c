@@ -37,6 +37,9 @@ typedef struct bisection {
     double f_a;
     double f_b;
 
+    /* result */
+    double root_x;
+
 } bisection_t;
 
 
@@ -210,6 +213,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         ptr->b = FNT_VECT_ELEM(*vec, 0);
         ptr->f_a = 0.0;
         ptr->f_b = 0.0;
+        ptr->root_x = ptr->a;
         ptr->state = done;
     } else {
         ERROR("Value (%g) is not comparable to zero.\n", value);
@@ -244,14 +248,26 @@ int method_done(void *handle) {
 
     if( fabs(ptr->b - ptr->a) < ptr->x_tol ) {
         INFO("Upper and lower bound within termination threshold.\n");
+        ptr->root_x = 0.5 * (ptr->b + ptr->a);
         ptr->state = done;
         return FNT_DONE;
     }
     if( fabs(ptr->f_b - ptr->f_a) < ptr->f_tol ) {
         INFO("Difference in function's value at upper and lower bound within termination threshold.\n");
+        ptr->root_x = 0.5 * (ptr->b + ptr->a);
         ptr->state = done;
         return FNT_DONE;
     }
 
     return FNT_CONTINUE;
+}
+
+
+int method_result(void *handle, char *id, void *value_ptr) {
+    if( handle == NULL )    { return FNT_FAILURE; }
+    bisection_t *ptr = (bisection_t*)handle;
+
+    FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
+
+    return FNT_SUCCESS;
 }
