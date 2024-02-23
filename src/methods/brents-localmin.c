@@ -132,7 +132,9 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("eps", id, double, value_ptr, ptr->eps);
     FNT_HPARAM_SET("t", id, double, value_ptr, ptr->t);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -147,7 +149,9 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("eps", id, double, ptr->eps, value_ptr);
     FNT_HPARAM_GET("t", id, double, ptr->t, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -342,5 +346,7 @@ int method_result(void *handle, char *id, void *value_ptr) {
     FNT_RESULT_GET("minimum x", id, double, ptr->min_x, value_ptr);
     FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }

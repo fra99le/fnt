@@ -103,26 +103,32 @@ int method_info() {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_hparam_set(void *handle, char *id, void *value_ptr) {
+    newton_raphson_t *ptr = (newton_raphson_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    newton_raphson_t *ptr = (newton_raphson_t*)handle;
 
     FNT_HPARAM_SET("x_0", id, double, value_ptr, ptr->next_x);
     FNT_HPARAM_SET("f_tol", id, double, value_ptr, ptr->f_tol);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
 int method_hparam_get(void *handle, char *id, void *value_ptr) {
+    newton_raphson_t *ptr = (newton_raphson_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    newton_raphson_t *ptr = (newton_raphson_t*)handle;
 
     FNT_HPARAM_GET("x_0", id, double, ptr->next_x, value_ptr);
     FNT_HPARAM_GET("f_tol", id, double, ptr->f_tol, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -197,5 +203,7 @@ int method_result(void *handle, char *id, void *value_ptr) {
 
     FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }

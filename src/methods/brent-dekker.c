@@ -139,7 +139,9 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("x_0", id, double, value_ptr, ptr->a);
     FNT_HPARAM_SET("x_1", id, double, value_ptr, ptr->b);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -154,7 +156,9 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("x_0", id, double, ptr->a, value_ptr);
     FNT_HPARAM_GET("x_1", id, double, ptr->b, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -333,6 +337,8 @@ int method_result(void *handle, char *id, void *value_ptr) {
     brent_dekker_t *ptr = (brent_dekker_t*)handle;
 
     FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
+
+    ERROR("No result named '%s'.\n", id);
 
     return FNT_FAILURE;
 }

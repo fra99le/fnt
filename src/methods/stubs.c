@@ -105,6 +105,8 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 
     FNT_HPARAM_SET("placeholder", id, int, value_ptr, ptr->placeholder);
 
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
     return FNT_FAILURE;
 }
 
@@ -122,6 +124,8 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( value_ptr == NULL ) { return FNT_FAILURE; }
 
     FNT_HPARAM_GET("placeholder", id, int, ptr->placeholder, value_ptr);
+
+    ERROR("No hyper-parameter named '%s'.\n", id);
 
     return FNT_FAILURE;
 }
@@ -179,10 +183,10 @@ int method_result(void *handle, char *id, void *value_ptr) {
     stub_t *ptr = (stub_t*)handle;
     if( ptr == NULL )       { return FNT_FAILURE; }
 
-    /* Optional method to report any additional results if the method
-     * produces such results.
-     */
+    /* Report any results the method produces. */
     FNT_RESULT_GET("result", id, double, ptr->result, value_ptr);
+
+    ERROR("No result named '%s'.\n", id);
 
     return FNT_FAILURE;
 }

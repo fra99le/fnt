@@ -16,11 +16,14 @@ typedef enum de_state {
 } de_state_t;
 
 typedef struct de {
+
     int dim;    /* number of dimensions in parameter vectors */
     de_state_t state;
+    int allocated_NP;
 
     /* hyper parameters */
     int iterations;
+    int NP;
     double F;
     double lambda;
     fnt_vect_t start_point;
@@ -31,7 +34,6 @@ typedef struct de {
     int has_upper_bounds;
 
     /* current generation */
-    int NP;
     fnt_vect_t *x;
     fnt_vect_t *x_prev;
     double *fx;
@@ -192,6 +194,7 @@ int method_init(void **handle_ptr, int dimensions) {
     /* set up method */
     ptr->iterations = 1000;
     ptr->NP = dimensions * 10;
+    ptr->allocated_NP = ptr->NP;
     ptr->F = 0.5;
     ptr->lambda = 0.1;
 
@@ -264,47 +267,7 @@ int method_info() {
     return FNT_SUCCESS;
 }
 
-
-/* \brief Set any hyper-parameters needed for the method.
- * \param id The name of the hyper-parameter.
- * \param value_ptr A pointer to the value being set.
- * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
- */
-int method_hparam_set(void *handle, char *id, void *value_ptr) {
-    if( id == NULL )        { return FNT_FAILURE; }
-    if( value_ptr == NULL ) { return FNT_FAILURE; }
-    de_t *ptr = (de_t*)handle;
-
-    int old_NP = ptr->NP;
-
-    FNT_HPARAM_SET("iterations", id, int, value_ptr, ptr->iterations);
-    FNT_HPARAM_SET("F", id, double, value_ptr, ptr->F);
-    FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
-    FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
-
-    if( strncmp("start", id, 5) == 0 ) {
-        if( !ptr->has_start_point ) {
-            fnt_vect_calloc(&ptr->start_point, ptr->dim);
-        }
-        fnt_vect_copy(&ptr->start_point, value_ptr);
-        ptr->has_start_point = 1;
-    }
-
-    if( strncmp("lower", id, 5) == 0 ) {
-        if( !ptr->has_lower_bounds ) {
-            fnt_vect_calloc(&ptr->lower_bounds, ptr->dim);
-        }
-        fnt_vect_copy(&ptr->lower_bounds, value_ptr);
-        ptr->has_lower_bounds = 1;
-    }
-
-    if( strncmp("upper", id, 5) == 0 ) {
-        if( !ptr->has_upper_bounds ) {
-            fnt_vect_calloc(&ptr->upper_bounds, ptr->dim);
-        }
-        fnt_vect_copy(&ptr->upper_bounds, value_ptr);
-        ptr->has_upper_bounds = 1;
-    }
+static int validate_hparams(de_t *ptr) {
 
     if( (ptr->has_lower_bounds && ptr->has_upper_bounds) ) {
         for(int j=0; j<ptr->lower_bounds.n; ++j) {
@@ -324,7 +287,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     }
 
     /* resize generation, if NP changed */
-    if( ptr->NP != old_NP ) {
+    if( ptr->NP != ptr->allocated_NP ) {
         /* free old generation tracking */
         de_free_generations(ptr);
 
@@ -336,10 +299,63 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 }
 
 
-int method_hparam_get(void *handle, char *id, void *value_ptr) {
+/* \brief Set any hyper-parameters needed for the method.
+ * \param id The name of the hyper-parameter.
+ * \param value_ptr A pointer to the value being set.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
+int method_hparam_set(void *handle, char *id, void *value_ptr) {
+    de_t *ptr = (de_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
+
+    FNT_HPARAM_SET("iterations", id, int, value_ptr, ptr->iterations);
+    FNT_HPARAM_SET("F", id, double, value_ptr, ptr->F);
+    FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
+    FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
+
+    if( strncmp("start", id, 5) == 0 ) {
+        if( !ptr->has_start_point ) {
+            fnt_vect_calloc(&ptr->start_point, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->start_point, value_ptr);
+        ptr->has_start_point = 1;
+
+        return FNT_SUCCESS;
+    }
+
+    if( strncmp("lower", id, 5) == 0 ) {
+        if( !ptr->has_lower_bounds ) {
+            fnt_vect_calloc(&ptr->lower_bounds, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->lower_bounds, value_ptr);
+        ptr->has_lower_bounds = 1;
+
+        return FNT_SUCCESS;
+    }
+
+    if( strncmp("upper", id, 5) == 0 ) {
+        if( !ptr->has_upper_bounds ) {
+            fnt_vect_calloc(&ptr->upper_bounds, ptr->dim);
+        }
+        fnt_vect_copy(&ptr->upper_bounds, value_ptr);
+        ptr->has_upper_bounds = 1;
+
+        return FNT_SUCCESS;
+    }
+
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
+}
+
+
+int method_hparam_get(void *handle, char *id, void *value_ptr) {
     de_t *ptr = (de_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
+    if( id == NULL )        { return FNT_FAILURE; }
+    if( value_ptr == NULL ) { return FNT_FAILURE; }
 
     FNT_HPARAM_GET("F", id, double, ptr->F, value_ptr);
     FNT_HPARAM_GET("lambda", id, double, ptr->lambda, value_ptr);
@@ -347,7 +363,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
 
     if( strncmp("start", id, 5) == 0 ) {
         if( ptr->has_start_point ) {
-            fnt_vect_copy(value_ptr, &ptr->start_point);
+            return fnt_vect_copy(value_ptr, &ptr->start_point);
         } else {
             ERROR("Start point requested, but not set.\n");
             return FNT_FAILURE;
@@ -355,7 +371,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     }
     if( strncmp("lower", id, 5) == 0 ) {
         if( ptr->has_lower_bounds ) {
-            fnt_vect_copy(value_ptr, &ptr->lower_bounds);
+            return fnt_vect_copy(value_ptr, &ptr->lower_bounds);
         } else {
             ERROR("Lower bound requested, but not set.\n");
             return FNT_FAILURE;
@@ -363,14 +379,16 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     }
     if( strncmp("upper", id, 5) == 0 ) {
         if( ptr->has_upper_bounds ) {
-            fnt_vect_copy(value_ptr, &ptr->upper_bounds);
+            return fnt_vect_copy(value_ptr, &ptr->upper_bounds);
         } else {
             ERROR("Upper bound requested, but not set.\n");
             return FNT_FAILURE;
         }
     }
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -382,12 +400,14 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
     /* fill initial generation during initialization phase */
     if( ptr->state == de_initial ) {
+        validate_hparams(ptr);
+
         de_fill_first_gen(ptr);
         return fnt_vect_copy(vec, &ptr->v);
     }
 
     if( ptr->state != de_running ) {
-        WARN("%s called while in the wrong state.\n", __FUNCTION__);
+        ERROR("%s called while in the wrong state.\n", __FUNCTION__);
 
         return FNT_FAILURE;
     }
@@ -449,12 +469,12 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     de_t *ptr = (de_t*)handle;
     if( ptr == NULL )   { return FNT_FAILURE; }
 
-
     /* replace parameter vector with v, if warranted */
     int curr = ptr->current;
     if( value < ptr->fx_prev[curr] || ptr->state == de_initial ) {
         fnt_vect_copy(&ptr->x[curr], vec);
         ptr->fx[curr] = value;
+        if( ptr->state == de_initial ) { ptr->state = de_running; }
     } else {
         fnt_vect_copy(&ptr->x[curr], &ptr->x_prev[curr]);
         ptr->fx[curr] = ptr->fx_prev[curr];
@@ -531,11 +551,13 @@ int method_done(void *handle) {
 
 
 int method_result(void *handle, char *id, void *value_ptr) {
-    if( handle == NULL )    { return FNT_FAILURE; }
     de_t *ptr = (de_t*)handle;
+    if( ptr == NULL )       { return FNT_FAILURE; }
 
     FNT_RESULT_GET_VECT("minimum x", id, ptr->min_x, value_ptr);
     FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }

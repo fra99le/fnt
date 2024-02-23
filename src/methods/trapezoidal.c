@@ -128,7 +128,9 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("subintervals", id, int, value_ptr, ptr->n);
     FNT_HPARAM_SET("n", id, int, value_ptr, ptr->n);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -149,7 +151,9 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("subintervals", id, int, ptr->n, value_ptr);
     FNT_HPARAM_GET("n", id, int, ptr->n, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
 
 
@@ -252,5 +256,7 @@ int method_result(void *handle, char *id, void *value_ptr) {
     /* report the area under the function */
     FNT_RESULT_GET("area", id, double, ptr->area, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }

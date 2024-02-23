@@ -130,10 +130,9 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_SET("lower", id, double, value_ptr, ptr->lower_bound);
     FNT_HPARAM_SET("upper", id, double, value_ptr, ptr->upper_bound);
 
-    ptr->a = ptr->lower_bound;
-    ptr->b = ptr->upper_bound;
+    ERROR("No hyper-parameter named '%s'.\n", id);
 
-    return FNT_SUCCESS;
+    return FNT_FAILURE;
 }
 
 
@@ -147,6 +146,8 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     FNT_HPARAM_GET("lower", id, double, ptr->lower_bound, value_ptr);
     FNT_HPARAM_GET("upper", id, double, ptr->upper_bound, value_ptr);
 
+    ERROR("No hyper-parameter named '%s'.\n", id);
+
     return FNT_FAILURE;
 }
 
@@ -156,8 +157,19 @@ int method_next(void *handle, fnt_vect_t *vec) {
     if( vec == NULL )       { return FNT_FAILURE; }
     bisection_t *ptr = (bisection_t*)handle;
 
-    if( ptr->state == initial )     { FNT_VECT_ELEM(*vec, 0) = ptr->a; return FNT_SUCCESS; }
-    if( ptr->state == initial2 )    { FNT_VECT_ELEM(*vec, 0) = ptr->b; return FNT_SUCCESS; }
+    if( ptr->state == initial ) {
+        ptr->a = ptr->lower_bound;
+        ptr->b = ptr->upper_bound;
+
+        FNT_VECT_ELEM(*vec, 0) = ptr->a;
+
+        return FNT_SUCCESS;
+    }
+    if( ptr->state == initial2 ) {
+        FNT_VECT_ELEM(*vec, 0) = ptr->b;
+
+        return FNT_SUCCESS;
+    }
 
     /* fill vector pointed to by vec with next input to try */
     FNT_VECT_ELEM(*vec, 0) = 0.5*ptr->a + 0.5*ptr->b;
@@ -259,7 +271,10 @@ int method_result(void *handle, char *id, void *value_ptr) {
     if( handle == NULL )    { return FNT_FAILURE; }
     bisection_t *ptr = (bisection_t*)handle;
 
+    /* Report any results the method produces. */
     FNT_RESULT_GET("root", id, double, ptr->root_x, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }

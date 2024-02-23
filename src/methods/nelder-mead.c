@@ -233,40 +233,34 @@ int method_info() {
 }
 
 
+static int validate_hparams(nelder_mead_t *nm) {
+    if( nm->alpha <= 0.0 ) {
+        WARN("WARN: alpha should be >0, currently set to %g\n", nm->alpha);
+    }
+    if( (nm->beta <= 0.0 || nm->beta >= 1.0) ) {
+        WARN("WARN: beta should be >0 and <1, currently set to %g\n", nm->beta);
+    }
+    if( nm->gamma <= 1.0 ) {
+        WARN("WARN: gamma should be >1, currently set to %g\n", nm->gamma);
+    }
+    if( (nm->delta <= 0.0 || nm->delta >= 1.0) ) {
+        WARN("WARN: delta should be >0 and <1, currently set to %g\n", nm->delta);
+    }
+
+    return FNT_SUCCESS;
+}
+
+
 int method_hparam_set(void *nm_ptr, char *id, void *value_ptr) {
-    if( nm_ptr == NULL )    { return FNT_FAILURE; }
+    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
+    if( nm == NULL )        { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
 
-    if( strncmp("alpha", id, 5) == 0 ) {
-        nm->alpha = (double)(*((double*)value_ptr));
-        if( nm->alpha <= 0.0 ) {
-            WARN("WARN: alpha should be >0, currently set to %g\n", nm->alpha);
-        }
-        return FNT_SUCCESS;
-    }
-    if( strncmp("beta", id, 4) == 0 ) {
-        nm->beta = (double)(*((double*)value_ptr));
-        if( (nm->beta <= 0.0 || nm->beta >= 1.0) ) {
-            WARN("WARN: beta should be >0 and <1, currently set to %g\n", nm->beta);
-        }
-        return FNT_SUCCESS;
-    }
-    if( strncmp("gamma", id, 5) == 0 ) {
-        nm->gamma = (double)(*((double*)value_ptr));
-        if( nm->gamma <= 1.0 ) {
-            WARN("WARN: gamma should be >1, currently set to %g\n", nm->gamma);
-        }
-        return FNT_SUCCESS;
-    }
-    if( strncmp("delta", id, 5) == 0 ) {
-        nm->delta = (double)(*((double*)value_ptr));
-        if( (nm->delta <= 0.0 || nm->delta >= 1.0) ) {
-            WARN("WARN: delta should be >0 and <1, currently set to %g\n", nm->delta);
-        }
-        return FNT_SUCCESS;
-    }
+    FNT_HPARAM_SET("alpha", id, double, value_ptr, nm->alpha);
+    FNT_HPARAM_SET("beta", id, double, value_ptr, nm->beta);
+    FNT_HPARAM_SET("gamma", id, double, value_ptr, nm->gamma);
+    FNT_HPARAM_SET("delta", id, double, value_ptr, nm->delta);
 
     ERROR("No hyper-parameter '%s'.\n", id);
 
@@ -275,27 +269,15 @@ int method_hparam_set(void *nm_ptr, char *id, void *value_ptr) {
 
 
 int method_hparam_get(void *nm_ptr, char *id, void *value_ptr) {
-    if( nm_ptr == NULL )    { return FNT_FAILURE; }
+    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
+    if( nm == NULL )        { return FNT_FAILURE; }
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
-    nelder_mead_t *nm = (nelder_mead_t*)nm_ptr;
 
-    if( strncmp("alpha", id, 5) == 0 ) {
-        *((double*)value_ptr) = nm->alpha;
-        return FNT_SUCCESS;
-    }
-    if( strncmp("beta", id, 4) == 0 ) {
-        *((double*)value_ptr) = nm->beta;
-        return FNT_SUCCESS;
-    }
-    if( strncmp("gamma", id, 5) == 0 ) {
-        *((double*)value_ptr) = nm->gamma;
-        return FNT_SUCCESS;
-    }
-    if( strncmp("delta", id, 5) == 0 ) {
-        *((double*)value_ptr) = nm->delta;
-        return FNT_SUCCESS;
-    }
+    FNT_HPARAM_GET("alpha", id, double, nm->alpha, value_ptr);
+    FNT_HPARAM_GET("beta", id, double, nm->beta, value_ptr);
+    FNT_HPARAM_GET("gamma", id, double, nm->gamma, value_ptr);
+    FNT_HPARAM_GET("delta", id, double, nm->delta, value_ptr);
 
     ERROR("No hyper-parameter '%s'.\n", id);
 
@@ -330,11 +312,15 @@ void nm_best_point(void *nm_ptr, fnt_vect_t *result) {
 
 
 int method_value(void *nm_ptr, fnt_vect_t *parameters, double value) {
-    if( nm_ptr == NULL )        { return FNT_FAILURE; }
+    nelder_mead_t *nm = nm_ptr;
+    if( nm == NULL )            { return FNT_FAILURE; }
     if( parameters == NULL )    { return FNT_FAILURE; }
     if( parameters->v == NULL ) { return FNT_FAILURE; }
 
-    nelder_mead_t *nm = nm_ptr;
+    if( nm->state == initial ) {
+        /* check hyper-parameters on the first iteration. */
+        validate_hparams(nm);
+    }
 
     nm->iterations += 1;
 
@@ -655,5 +641,7 @@ int method_result(void *handle, char *id, void *value_ptr) {
     FNT_RESULT_GET_VECT("minimum x", id, ptr->min_x, value_ptr);
     FNT_RESULT_GET("minimum f", id, double, ptr->min_fx, value_ptr);
 
-    return FNT_SUCCESS;
+    ERROR("No result named '%s'.\n", id);
+
+    return FNT_FAILURE;
 }
