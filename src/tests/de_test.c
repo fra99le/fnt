@@ -64,7 +64,7 @@ int main() {
     fnt_hparam_get(fnt, "F", &F);
     fnt_hparam_get(fnt, "lambda", &lambda);
     fnt_hparam_get(fnt, "NP", &NP);
-    printf("\titerations: %g\n\tF: %g\n\tlambda: %g\n\tNP: %d\n", iterations, F, lambda, NP);
+    printf("\titerations: %d\n\tF: %g\n\tlambda: %g\n\tNP: %d\n", iterations, F, lambda, NP);
 
     /* allocate input for objective function */
     fnt_vect_t x;
