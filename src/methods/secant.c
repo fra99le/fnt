@@ -188,16 +188,6 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 }
 
 
-int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_t *gradient) {
-    secant_t *ptr = (secant_t*)handle;
-    if( ptr == NULL )       { return FNT_FAILURE; }
-    if( vec == NULL )       { return FNT_FAILURE; }
-
-    /* update method using value and derivative/gradient */
-    return method_value(handle, vec, value);
-}
-
-
 int method_done(void *handle) {
     secant_t *ptr = (secant_t*)handle;
     if( ptr == NULL )       { return FNT_FAILURE; }

@@ -224,14 +224,6 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
 }
 
 
-int method_value_gradient(void *handle, fnt_vect_t *vec, double value, fnt_vect_t gradient) {
-    if( handle == NULL )    { return FNT_FAILURE; }
-
-    /* update method using value and derivative/gradient */
-    return method_value(handle, vec, value);
-}
-
-
 int method_done(void *handle) {
     if( handle == NULL )    { return FNT_FAILURE; }
     bisection_t *ptr = (bisection_t*)handle;
