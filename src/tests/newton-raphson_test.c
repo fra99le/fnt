@@ -67,12 +67,11 @@ int main() {
         if( fnt_set_value_gradient(fnt, &x, fx, &dfdx) != FNT_SUCCESS ) { break; }
     }
 
-    /* Get best result. */
-    if( fnt_root(fnt, &x, NULL) == FNT_SUCCESS )
-        fnt_vect_println(&x, "Best result: ", "%.3f");
-
-    /* Get/report any results beyond best input vector. */
-    fnt_result(fnt, NULL);
+    /* Get/report result. */
+    double x_root;
+    if( fnt_result(fnt, "root", &x_root) == FNT_SUCCESS ) {
+        printf("Root found at x = %.3f\n", x_root);
+    }
 
     /* free input vector */
     fnt_vect_free(&x);

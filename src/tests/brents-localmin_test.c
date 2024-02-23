@@ -80,11 +80,14 @@ int main() {
     }
 
     /* Get best result. */
-    if( fnt_minimum(fnt, &x, NULL) == FNT_SUCCESS )
-        fnt_vect_println(&x, "Best result: ", NULL);
-
-    /* Get/report any results beyond best input vector. */
-    fnt_result(fnt, NULL);
+    double min_x;
+    double min_fx;
+    if( fnt_result(fnt, "minimum x", &min_x) == FNT_SUCCESS
+        && fnt_result(fnt, "minimum f", &min_fx) == FNT_SUCCESS ) {
+        printf("Minimum found at f(%g) = %g\n", min_x, min_fx);
+    } else {
+        ERROR("Failed to get results.\n");
+    }
 
     /* free input vector */
     fnt_vect_free(&x);

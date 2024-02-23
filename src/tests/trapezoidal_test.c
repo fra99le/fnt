@@ -65,8 +65,9 @@ int main() {
 
     /* Get/report any results beyond best input vector. */
     double area = 0.0;
-    fnt_result(fnt, &area);
-    printf("Area under function is %g\n", area);
+    if( fnt_result(fnt, "area", &area) == FNT_SUCCESS ) {
+        printf("Area under function is %g\n", area);
+    }
 
     /* free input vector */
     fnt_vect_free(&x);

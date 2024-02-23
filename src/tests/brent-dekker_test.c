@@ -66,10 +66,10 @@ int main() {
         if( fnt_set_value(fnt, &x, fx) != FNT_SUCCESS ) { break; }
     }
 
-    /* Get best result. */
+    /* Get/report result. */
     double x_root;
-    if( fnt_root(fnt, &x, &x_root) == FNT_SUCCESS ) {
-        fnt_vect_println(&x, "Best result: ", "%.3f");
+    if( fnt_result(fnt, "root", &x_root) == FNT_SUCCESS ) {
+        printf("Root found at x = %.3f\n", x_root);
     }
 
     /* free input vector */
