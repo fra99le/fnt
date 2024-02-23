@@ -99,8 +99,8 @@ int main() {
 
     /* Get the root. */
     double x_root;
-    if( fnt_root(fnt, &x, &x_root) == FNT_SUCCESS ) {
-        fnt_vect_println(&x, "Root found at: x=", "%.3f");
+    if( fnt_result(fnt, "root", &x_root) == FNT_SUCCESS ) {
+        printf("Root found at x = %.3f\n", x_root);
     }
 
     /* MARK: Begin teardown */
