@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2024 Bryan Franklin. All rights reserved.
  */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,15 +75,48 @@ static int de_print_generation(de_t *ptr) {
 
 static int de_allocate_generations(de_t *ptr) {
 
-    /* TODO: Check for calloc failures */
-    ptr->x = calloc(ptr->NP, sizeof(fnt_vect_t));
-    ptr->x_prev = calloc(ptr->NP, sizeof(fnt_vect_t));
-    for(int i=0; i<ptr->NP; ++i) {
-        fnt_vect_calloc(&ptr->x[i], ptr->dim);
-        fnt_vect_calloc(&ptr->x_prev[i], ptr->dim);
+    int ret = FNT_SUCCESS;
+
+    if( (ptr->x = calloc(ptr->NP, sizeof(fnt_vect_t))) == NULL ) {
+       ERROR("calloc: %s\n", strerror(errno));
+       ret = FNT_FAILURE;
     }
-    ptr->fx = calloc(ptr->NP, sizeof(double));
-    ptr->fx_prev = calloc(ptr->NP, sizeof(double));
+    if( (ptr->x_prev = calloc(ptr->NP, sizeof(fnt_vect_t))) == NULL ) {
+       ERROR("calloc: %s\n", strerror(errno));
+       ret = FNT_FAILURE;
+    }
+    for(int i=0; i<ptr->NP; ++i) {
+        if( fnt_vect_calloc(&ptr->x[i], ptr->dim) != FNT_SUCCESS
+         || fnt_vect_calloc(&ptr->x_prev[i], ptr->dim) != FNT_SUCCESS ) {
+            ERROR("fnt_vect_calloc failed.\n");
+            ret = FNT_FAILURE;
+            break;
+        }
+    }
+    if( (ptr->fx = calloc(ptr->NP, sizeof(double))) == NULL ) {
+        ERROR("calloc: %s\n", strerror(errno));
+        ret = FNT_FAILURE;
+    }
+    if( (ptr->fx_prev = calloc(ptr->NP, sizeof(double))) == NULL ) {
+        ERROR("calloc: %s\n", strerror(errno));
+        ret = FNT_FAILURE;
+    }
+
+    if( ret == FNT_FAILURE ) {
+        /* one or more allocations failed,
+         * so free allocations that did succeeed. */
+        for(int i=0; i<ptr->NP; ++i) {
+            /* fnt_vect_free checks for NULL internally. */
+            if( ptr->x != NULL )        { fnt_vect_free(&ptr->x[i]); }
+            if( ptr->x_prev != NULL )   { fnt_vect_free(&ptr->x_prev[i]); }
+        }
+        if( ptr->x )        { free(ptr->x); ptr->x = NULL; }
+        if( ptr->x_prev )   { free(ptr->x_prev); ptr->x_prev = NULL; }
+        if( ptr->fx )       { free(ptr->fx); ptr->fx = NULL; }
+        if( ptr->fx_prev )  { free(ptr->fx_prev); ptr->fx_prev = NULL; }
+
+        return FNT_FAILURE;
+    }
 
     if( fnt_verbose_level >= FNT_DEBUG ) {
         de_print_generation(ptr);
