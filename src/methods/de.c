@@ -26,6 +26,7 @@ typedef struct de {
     int iterations;
     int NP;
     double F;
+    double CR;
     double lambda;
     fnt_vect_t start_point;
     fnt_vect_t lower_bounds;
@@ -230,6 +231,7 @@ int method_init(void **handle_ptr, int dimensions) {
     ptr->NP = dimensions * 10;
     ptr->allocated_NP = ptr->NP;
     ptr->F = 0.5;
+    ptr->CR = 0.5;
     ptr->lambda = 0.1;
 
     /* allocate generations */
@@ -289,8 +291,9 @@ int method_info() {
 "start\toptional\tfnt_vect_t\tnone\tCenter of initial search region.\n"
 "NP\tREQUIRED\tint\t\t10*dims\tNumber of random points.\n"
 "F\toptional\tint\t\t0\tScaling factor applied to difference of vectors.\n"
+"CR\toptional\tdouble\t\t0.5\tCrossover rate. (DE1 only)\n"
 "lambda\toptional\tint\t\t0\tScaling factor applied to best vector difference.\n"
-"iterations\toptional\tint\t\t1000\tNumber of iterations to run.\n"
+"iters\toptional\tint\t\t1000\tNumber of iterations to run.\n"
 "\n"
 "References:\n"
 "Storn, R., Price, K. Differential Evolution – A Simple and Efficient\n"
@@ -346,6 +349,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
 
     FNT_HPARAM_SET("iterations", id, int, value_ptr, ptr->iterations);
     FNT_HPARAM_SET("F", id, double, value_ptr, ptr->F);
+    FNT_HPARAM_SET("CR", id, double, value_ptr, ptr->CR);
     FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);
     FNT_HPARAM_SET("NP", id, int, value_ptr, ptr->NP);
 
@@ -392,6 +396,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( value_ptr == NULL ) { return FNT_FAILURE; }
 
     FNT_HPARAM_GET("F", id, double, ptr->F, value_ptr);
+    FNT_HPARAM_GET("CR", id, double, ptr->CR, value_ptr);
     FNT_HPARAM_GET("lambda", id, double, ptr->lambda, value_ptr);
     FNT_HPARAM_GET("NP", id, int, ptr->NP, value_ptr);
 
@@ -474,10 +479,26 @@ int method_next(void *handle, fnt_vect_t *vec) {
         fnt_vect_sub(&x_prev[r2], &x_prev[r3], &diff);
         fnt_vect_scale(&diff, ptr->F, &scaled);
         fnt_vect_add(&x_prev[r1], &scaled, &ptr->v);
+
+        /* apply crossover */
+        int n = FNT_RAND() % ptr->dim;
+        int L = 0;
+        do {
+            ++L;
+        } while( (FNT_RAND()/FNT_RAND_MAX) < ptr->CR
+                    && (L < ptr->dim));
+
+        /* replace elements of v that should not have been selected */
+        int D = ptr->dim;
+        for(int j=0; j<D; ++j) {
+            if( (j < n && j > ((n + L - 1) % D) )
+                || (j > (n + L - 1) ) ) {
+                DEBUG("Setting v[%d] back to %g from %g.\n", j, FNT_VECT_ELEM(x_prev[curr], j), FNT_VECT_ELEM(ptr->v, j));
+                FNT_VECT_ELEM(ptr->v, j) = FNT_VECT_ELEM(x_prev[curr], j);
+            }
+        }
     }
 
-    /* apply crossover */
-    /* TODO: Add crossover */
 
     /* apply lower and upper bounds */
     if( ptr->has_lower_bounds ) {
