@@ -323,6 +323,21 @@ static int validate_hparams(de_t *ptr) {
         ptr->NP = 3;
     }
 
+    if( ptr->F < 0.0 ) {
+        WARN("F must be greater than zero.  Setting F to 0.1.\n");
+        ptr->F = 0.1;
+    }
+    if( ptr->CR < 0.0 ) {
+        WARN("CR cannot be negative.  Setting CR to 0.0.\n");
+        ptr->CR = 0.0;
+    }
+    if( ptr->CR > 1.0 ) {
+        WARN("CR cannot be greater than one.  Setting CR to 1.0.\n");
+        ptr->CR = 1.0;
+    }
+
+    /* Note: Storn and Price to not specify a valid range for \lambda. */
+
     /* resize generation, if NP changed */
     if( ptr->NP != ptr->allocated_NP ) {
         /* free old generation tracking */
