@@ -347,7 +347,7 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
 
-    FNT_HPARAM_SET("iterations", id, int, value_ptr, ptr->iterations);
+    FNT_HPARAM_SET("iters", id, int, value_ptr, ptr->iterations);
     FNT_HPARAM_SET("F", id, double, value_ptr, ptr->F);
     FNT_HPARAM_SET("CR", id, double, value_ptr, ptr->CR);
     FNT_HPARAM_SET("lambda", id, double, value_ptr, ptr->lambda);

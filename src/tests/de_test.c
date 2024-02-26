@@ -33,7 +33,7 @@ int main() {
     /* set threshold for completion */
     int iterations = 1e4;
     int NP = 20;
-    fnt_hparam_set(fnt, "iterations", &iterations);
+    fnt_hparam_set(fnt, "iters", &iterations);
     fnt_hparam_set(fnt, "NP", &NP);
 
     #if 0
