@@ -508,7 +508,8 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
     if( value < ptr->fx_prev[curr] || ptr->state == de_initial ) {
         fnt_vect_copy(&ptr->x[curr], vec);
         ptr->fx[curr] = value;
-        if( ptr->state == de_initial ) { ptr->state = de_running; }
+        if( curr == ptr->NP
+            && ptr->state == de_initial ) { ptr->state = de_running; }
     } else {
         fnt_vect_copy(&ptr->x[curr], &ptr->x_prev[curr]);
         ptr->fx[curr] = ptr->fx_prev[curr];
