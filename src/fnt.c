@@ -277,8 +277,6 @@ int fnt_method_load(context_t *ctx, char *filename) {
         return FNT_FAILURE;
     }
 
-    /* TODO: Need to set default versions of optional methods. */
-
     return FNT_SUCCESS;
 }
 
@@ -366,8 +364,6 @@ int fnt_free(void **context) {
 
     fnt_method_list_free(&ctx->methods_list);
     dlclose(ctx->dl_handle);    ctx->dl_handle = NULL;
-
-    /* TODO: empty any queued values */
 
     if( ret == FNT_SUCCESS ) {
         free(*context); *context = ctx = NULL;
