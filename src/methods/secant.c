@@ -91,10 +91,29 @@ int method_free(void **handle_ptr) {
 }
 
 
+/* \brief Display information about the method to the console.
+ * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
+ */
 int method_info() {
-    printf("\n"
-           "This should give usefiul information about the method.\n"
-           "\n");
+    printf(
+"The secant method is a root finding method that uses two points on the\n"
+"function to contruct a line, then extends that line to the x-axis to\n"
+"find a new point to contruct a line through.\n"
+"\n"
+"Hyper-parameters:\n"
+"name\trequired\ttype\tDefault\tDescription\n"
+"x_0\tREQUIRED\tdouble\tnone\tx value for first point.\n"
+"x_1\tREQUIRED\tdouble\tnone\tx value for second point.\n"
+"f_tol\toptional\tdouble\t1e-6\tMethod stops when |f(x)| < f_tol.\n"
+"\n"
+"Results:\n"
+"name\ttype\tDescription\n"
+"root\tdouble\tThe value of x where |f(x)| < f_tol.\n"
+"\n"
+"References:\n"
+"Fausett, L.V. (2002). Numerical Methods: Algorithms and Applications.\n"
+"\tISBN 0-13-031400-5\n"
+);
     return FNT_SUCCESS;
 }
 
