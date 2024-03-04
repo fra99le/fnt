@@ -93,6 +93,10 @@ int method_info() {
 "name\trequired\ttype\tDefault\tDescription\n"
 "placeholder\toptional\tint\t0\tJust an example hyper-parameter.\n"
 "\n"
+"Results:\n"
+"name\ttype\tDescription\n"
+"result\ndouble\nJust an example result.\n"
+"\n"
 "References:\n"
 "None"
 );
