@@ -1,5 +1,5 @@
 /*
- * bisection_test.c
+ * trapezoidal_test.c
  * fnt: Numerical Toolbox
  *
  * Copyright (c) 2024 Bryan Franklin. All rights reserved.
