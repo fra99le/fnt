@@ -43,7 +43,7 @@ typedef struct gradient_est {
  * \return FNT_SUCCESS on success, FNT_FAILURE otherwise.
  */
 int method_name(char *name, int size) {
-    if( snprintf(name, size, "gradient estmate") >= size ) {
+    if( snprintf(name, size, "gradient estimate") >= size ) {
         return FNT_FAILURE;
     }
 
@@ -109,17 +109,18 @@ int method_info() {
 "estimate the gradient of a fucntion at a specified point.\n"
 "\n"
 "Hyper-parameters:\n"
-"name\trequired\ttype\tDefault\tDescription\n"
-"x0\trequired\tfnt_vect_t\tnone\tPoint where the gradient is estimated.\n"
-"step\toptional\tdouble\t1e-3\tStep size to use.\n"
-"step_vec\toptional\tfnt_vect_t\tnone\tStep sies to use in each dimension.\n"
+"name\t\trequired\ttype\t\tDefault\tDescription\n"
+"x0\t\tREQUIRED\tfnt_vect_t\tnone\tPoint where the gradient is estimated.\n"
+"step\t\toptional\tdouble\t\t1e-3\tStep size to use.\n"
+"step_vec\toptional\tfnt_vect_t\tnone\tStep sizes to use in each dimension.\n"
 "\n"
 "Results:\n"
-"name\ttype\tDescription\n"
-"gradient\ndouble\nthe estimated gradient at x0.\n"
+"name\t\ttype\tDescription\n"
+"gradient\tdouble\tEstimated gradient at x0.\n"
 "\n"
 "References:\n"
-"None"
+"Anton, H. (1992). Calculus with analytic geometry -- 4th ed.\n"
+"\tISBN 0-471-50901-9\n"
 );
     return FNT_SUCCESS;
 }
@@ -137,8 +138,14 @@ int method_hparam_set(void *handle, char *id, void *value_ptr) {
     if( handle == NULL )    { return FNT_FAILURE; }
     gradient_est_t *ptr = (gradient_est_t*)handle;
 
-    FNT_HPARAM_SET("step", id, int, value_ptr, ptr->step);
+    FNT_HPARAM_SET("step", id, double, value_ptr, ptr->step);
     FNT_HPARAM_SET_VECT("x0", id, value_ptr, &ptr->x0);
+
+    if( strncmp("step_vec", id, 9) == 0 ) {
+        ptr->has_steps_vec = 1;
+        FNT_HPARAM_SET_VECT("step_vec", id, value_ptr, &ptr->steps);
+        /* Note: FNT_HPARAM_SET_VECT will return FNT_SUCCESS */
+    }
 
     ERROR("No hyper-parameter named '%s'.\n", id);
 
@@ -158,7 +165,7 @@ int method_hparam_get(void *handle, char *id, void *value_ptr) {
     if( id == NULL )        { return FNT_FAILURE; }
     if( value_ptr == NULL ) { return FNT_FAILURE; }
 
-    FNT_HPARAM_GET("step", id, int, ptr->step, value_ptr);
+    FNT_HPARAM_GET("step", id, double, ptr->step, value_ptr);
     FNT_HPARAM_GET_VECT("x0", id, &ptr->x0, value_ptr);
 
     ERROR("No hyper-parameter named '%s'.\n", id);
@@ -180,8 +187,10 @@ int method_next(void *handle, fnt_vect_t *vec) {
 
     fnt_vect_copy(vec, &ptr->x0);
     if( ptr->has_steps_vec ) {
+        DEBUG("DEBUG: Updating x0 with element %i of step vector (%g).\n", ptr->curr, FNT_VECT_ELEM(ptr->steps, ptr->curr));
         FNT_VECT_ELEM(*vec, ptr->curr) += FNT_VECT_ELEM(ptr->steps, ptr->curr);
     } else {
+        DEBUG("DEBUG: Updating x0 with step (%g).\n", ptr->step);
         FNT_VECT_ELEM(*vec, ptr->curr) += ptr->step;
     }
 
@@ -200,6 +209,7 @@ int method_value(void *handle, fnt_vect_t *vec, double value) {
         ptr->fx0 = value;
         ptr->curr = 0;
         ptr->state = gradient_est_running;
+        return FNT_SUCCESS;
     }
 
     /* estimate partial derivative with respect to current dimension */
