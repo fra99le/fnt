@@ -40,28 +40,39 @@
 /* MARK: Hyper-parameter accessing macros */
 
 #define FNT_HPARAM_SET(name, id, type, src_ptr, dst) \
-    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
         (dst) = *(type*)(src_ptr); \
         return FNT_SUCCESS; \
     }
 
 #define FNT_HPARAM_GET(name, id, type, src, dst_ptr) \
-    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
         *(type*)(dst_ptr) = (src); \
         return FNT_SUCCESS; \
     }
+
+#define FNT_HPARAM_SET_VECT(name, id, src_ptr, dst) \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
+        return fnt_vect_copy(dst, src_ptr); \
+    }
+
+#define FNT_HPARAM_GET_VECT(name, id, src, dst_ptr) \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
+        return fnt_vect_copy(dst_ptr, src); \
+    }
+
 
 
 /* MARK: Result accessing macros */
 
 #define FNT_RESULT_GET(name, id, type, src, dst_ptr) \
-    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
         *(type*)(dst_ptr) = (src); \
         return FNT_SUCCESS; \
     }
 
 #define FNT_RESULT_GET_VECT(name, id, src, dst_ptr) \
-    if( strncmp((name), (id), strlen(name)) == 0 ) { \
+    if( strncmp((name), (id), strlen(name)+1) == 0 ) { \
         return fnt_vect_copy(dst_ptr, &src); \
     }
 
